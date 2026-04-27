@@ -58,10 +58,20 @@
       "sun_hours_relative_today": { "name": "Sunshine relative today" },
       "sunrise": { "name": "Sunrise" },
       "sunset": { "name": "Sunset" },
+      "solar_transit": { "name": "Solar transit" },
+      "civil_dawn": { "name": "Civil dawn" },
+      "civil_dusk": { "name": "Civil dusk" },
+      "nautical_dawn": { "name": "Nautical dawn" },
+      "nautical_dusk": { "name": "Nautical dusk" },
+      "astronomical_dawn": { "name": "Astronomical dawn" },
+      "astronomical_dusk": { "name": "Astronomical dusk" },
       "moon_illumination": { "name": "Moon illumination" },
       "moon_phase": { "name": "Moon phase" },
+      "moon_rise": { "name": "Moonrise" },
+      "moon_set": { "name": "Moonset" },
       "next_full_moon": { "name": "Next full moon" },
-      "next_new_moon": { "name": "Next new moon" }
+      "next_new_moon": { "name": "Next new moon" },
+      "api_requests_remaining": { "name": "API requests remaining" }
     },
     "binary_sensor": {
       "rain_expected_3h": { "name": "Rain expected (3h)" },

@@ -19,6 +19,8 @@ class KachelmannClient:
     def __init__(self, hass: HomeAssistant, api_key: str) -> None:
         self._session = async_get_clientsession(hass)
         self._api_key = api_key
+        self.rate_limit_remaining: int | None = None
+        self.rate_limit_limit: int | None = None
 
     async def _get(self, url: str) -> dict[str, Any]:
         headers = {"X-API-Key": self._api_key}
@@ -39,9 +41,17 @@ class KachelmannClient:
                         pass
             raise RateLimitError("Rate limit exceeded", retry_after=retry_after)
 
-        remaining = resp.headers.get("x-ratelimit-remaining")
-        if remaining is not None:
-            _LOGGER.debug("Rate limit remaining: %s", remaining)
+        # Track rate limit from response headers
+        if "x-ratelimit-remaining" in resp.headers:
+            try:
+                self.rate_limit_remaining = int(resp.headers["x-ratelimit-remaining"])
+            except (ValueError, TypeError):
+                pass
+        if "x-ratelimit-limit" in resp.headers:
+            try:
+                self.rate_limit_limit = int(resp.headers["x-ratelimit-limit"])
+            except (ValueError, TypeError):
+                pass
 
         resp.raise_for_status()
         return await resp.json()

@@ -79,6 +79,10 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
                 "forecast_daily": daily,
                 "trend14": trend14,
                 "astronomy": astronomy,
+                "rate_limit": {
+                    "remaining": self.client.rate_limit_remaining,
+                    "limit": self.client.rate_limit_limit,
+                },
             }
 
         except RateLimitError as err:
