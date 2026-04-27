@@ -1,8 +1,10 @@
 """Constants for the KachelmannWetter integration."""
 
+from homeassistant.const import Platform
+
 DOMAIN = "kachelmannwetter"
 DEFAULT_NAME = "KachelmannWetter"
-PLATFORMS = ["weather"]
+PLATFORMS: list[Platform] = [Platform.WEATHER]
 
 CONF_API_KEY = "api_key"
 CONF_LATITUDE = "latitude"

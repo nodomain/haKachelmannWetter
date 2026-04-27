@@ -1,3 +1,39 @@
 {
-  "title": "KachelmannWetter"
+  "config": {
+    "step": {
+      "user": {
+        "title": "KachelmannWetter",
+        "description": "Enter your KachelmannWetter API key and coordinates.",
+        "data": {
+          "api_key": "API Key",
+          "latitude": "Latitude",
+          "longitude": "Longitude"
+        }
+      },
+      "reauth": {
+        "title": "Re-authenticate",
+        "description": "Your API key is invalid. Please enter a new one.",
+        "data": {
+          "api_key": "API Key"
+        }
+      }
+    },
+    "error": {
+      "auth": "Invalid API key",
+      "cannot_connect": "Cannot connect to KachelmannWetter API"
+    },
+    "abort": {
+      "reauth_successful": "Re-authentication successful"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "KachelmannWetter Options",
+        "data": {
+          "update_interval": "Update interval (seconds)"
+        }
+      }
+    }
+  }
 }

@@ -28,20 +28,23 @@ WEATHER_SYMBOL_DICT = {
     "wind": "windy",
 }
 
+
 def safeget(dct, *keys):
+    """Safely traverse nested dicts."""
     for key in keys:
         try:
             dct = dct[key]
-        except KeyError:
+        except (KeyError, TypeError):
             return None
     return dct
 
+
 def normalize_current(data: dict[str, Any]) -> dict[str, Any]:
+    """Normalize current weather API response to canonical keys."""
     if not data:
         return {}
 
     out: dict[str, Any] = {}
-
     out["temperature"] = safeget(data, "data", "temp", "value")
     out["humidity"] = safeget(data, "data", "humidityRelative", "value")
     out["pressure"] = safeget(data, "data", "pressureMsl", "value")
@@ -49,34 +52,50 @@ def normalize_current(data: dict[str, Any]) -> dict[str, Any]:
     out["wind_gust"] = safeget(data, "data", "windGust", "value")
     out["wind_bearing"] = safeget(data, "data", "windDirection", "value")
     out["precipitation_1h"] = safeget(data, "data", "prec1h", "value")
-    # out["precipitation_24h"] = _first("precipitation_24h", "rain_24h", "precip_24h", data=data)
-    # out["visibility"] = _first("visibility", "vis", data=data)
-    out["condition"] = WEATHER_SYMBOL_DICT.get(safeget(data, "data", "weatherSymbol", "value"))
-    # out["timestamp"] = _first("timestamp", "time", "date", data=data)
-    # out["station"] = _first("station", "station_id", "stationName", data=data) 
-
+    out["condition"] = WEATHER_SYMBOL_DICT.get(
+        safeget(data, "data", "weatherSymbol", "value")
+    )
     return out
 
+
+def _safe_avg(values: list) -> float | None:
+    """Return average of non-None values, or None."""
+    clean = [v for v in values if v is not None]
+    return sum(clean) / len(clean) if clean else None
+
+
+def _safe_max(values: list) -> float | None:
+    """Return max of non-None values, or None."""
+    clean = [v for v in values if v is not None]
+    return max(clean) if clean else None
+
+
+def _safe_min(values: list) -> float | None:
+    """Return min of non-None values, or None."""
+    clean = [v for v in values if v is not None]
+    return min(clean) if clean else None
+
+
+def _safe_sum(values: list) -> float:
+    """Return sum of non-None values."""
+    return sum(v for v in values if v is not None)
+
+
 def normalize_forecasts(data: dict[str, Any]) -> dict[str, Any]:
-    # This expecting data in 6h steps from /advanced/6h endpoint
-    # We want to provide daily forecasts from this
+    """Normalize 6h forecast data into daily forecasts for HA."""
     if not data:
         return {}
 
-    out: dict[str, Any] = {}
-    out["daily"] = []
-    daily_data: dict[date, dict[str, Any]] = {}
-    
+    out: dict[str, Any] = {"daily": []}
+    daily_data: dict[date, dict[str, list]] = {}
+
     for entry in data.get("data", []):
-        
         date_key = datetime.fromisoformat(entry["dateTime"]).date()
-        timeofday = datetime.fromisoformat(entry["dateTime"]).time()
         if date_key not in daily_data:
             daily_data[date_key] = {
                 "cloud_coverage": [],
                 "condition": set(),
                 "humidity": [],
-                "native_apparent_temperature": [],
                 "native_dew_point": [],
                 "native_precipitation": [],
                 "native_pressure": [],
@@ -84,44 +103,60 @@ def normalize_forecasts(data: dict[str, Any]) -> dict[str, Any]:
                 "native_templow": [],
                 "native_wind_gust_speed": [],
                 "native_wind_speed": [],
-                "precipitation_probability": [],
-                "uv_index": [],
                 "wind_bearing": [],
-                "timeofday": timeofday,
             }
-            
-        
-        daily_data[date_key]["cloud_coverage"].append(entry.get("cloudCoverage"))
-        daily_data[date_key]["condition"].add(WEATHER_SYMBOL_DICT.get(entry.get("weatherSymbol")))
-        daily_data[date_key]["humidity"].append(entry.get("humidityRelative"))
-        daily_data[date_key]["native_dew_point"].append(entry.get("dewpoint"))
-        daily_data[date_key]["native_precipitation"].append(entry.get("prec6h", 0))
-        daily_data[date_key]["native_pressure"].append(entry.get("pressureMsl"))
-        daily_data[date_key]["native_temperature"].append(entry["tempMax6h"])
-        daily_data[date_key]["native_templow"].append(entry["tempMin6h"])
-        daily_data[date_key]["native_wind_gust_speed"].append(entry.get("windGust"))
-        daily_data[date_key]["native_wind_speed"].append(entry.get("windSpeed"))
-        #daily_data[date_key]["precipitation_probability"].append(entry.get("precProb"))
-        #daily_data[date_key]["uv_index"].append(entry.get("uvIndex"))
-        daily_data[date_key]["wind_bearing"].append(entry.get("windDirection"))
 
-    for date_key, entry in daily_data.items():
+        d = daily_data[date_key]
+        d["cloud_coverage"].append(entry.get("cloudCoverage"))
+        symbol = WEATHER_SYMBOL_DICT.get(entry.get("weatherSymbol"))
+        if symbol:
+            d["condition"].add(symbol)
+        d["humidity"].append(entry.get("humidityRelative"))
+        d["native_dew_point"].append(entry.get("dewpoint"))
+        d["native_precipitation"].append(entry.get("prec6h", 0))
+        d["native_pressure"].append(entry.get("pressureMsl"))
+        d["native_temperature"].append(entry.get("tempMax6h"))
+        d["native_templow"].append(entry.get("tempMin6h"))
+        d["native_wind_gust_speed"].append(entry.get("windGust"))
+        d["native_wind_speed"].append(entry.get("windSpeed"))
+        d["wind_bearing"].append(entry.get("windDirection"))
+
+    # Priority order for picking the "worst" condition of the day
+    _condition_severity = list(WEATHER_SYMBOL_DICT.values())
+
+    for date_key in sorted(daily_data):
+        d = daily_data[date_key]
+        # Pick the most severe condition of the day
+        condition = None
+        if d["condition"]:
+            condition = max(
+                d["condition"],
+                key=lambda x: _condition_severity.index(x)
+                if x in _condition_severity
+                else 0,
+            )
+
+        # RFC 3339 UTC datetime as required by HA
+        dt_str = datetime(
+            date_key.year, date_key.month, date_key.day, 12, 0, 0
+        ).isoformat() + "+00:00"
+
         forecast = {
-            "datetime": date_key.isoformat(),
-            "condition": max(entry["condition"], key=lambda x: list(WEATHER_SYMBOL_DICT.values()).index(x)) if entry["condition"] else None,
-            "cloudCoverage": sum(entry["cloud_coverage"])/len(entry["cloud_coverage"]) if entry["cloud_coverage"] else None,
-            "humidity": sum(entry["humidity"])/len(entry["humidity"]) if entry["humidity"] else None,
-            "native_dew_point": sum(entry["native_dew_point"])/len(entry["native_dew_point"]) if entry["native_dew_point"] else None,
-            "native_precipitation": sum(entry["native_precipitation"]) if entry["native_precipitation"] else 0,
-            "native_pressure": sum(entry["native_pressure"])/len(entry["native_pressure"]) if entry["native_pressure"] else None,
-            "native_temperature": max(entry["native_temperature"]) if entry["native_temperature"] else None,
-            "native_templow": min(entry["native_templow"]) if entry["native_templow"] else None,
-            "native_wind_gust_speed": max(entry["native_wind_gust_speed"]) if entry["native_wind_gust_speed"] else None,
-            "native_wind_speed": max(entry["native_wind_speed"]) if entry["native_wind_speed"] else None,
-            "precipitation_probability": max(entry["precipitation_probability"]) if entry["precipitation_probability"] else None,
-            "wind_bearing": int(sum(entry["wind_bearing"])/len(entry["wind_bearing"])) if entry["wind_bearing"] else None,
-            # Add more fields as needed
+            "datetime": dt_str,
+            "condition": condition,
+            "cloud_coverage": _safe_avg(d["cloud_coverage"]),
+            "humidity": _safe_avg(d["humidity"]),
+            "native_dew_point": _safe_avg(d["native_dew_point"]),
+            "native_precipitation": _safe_sum(d["native_precipitation"]),
+            "native_pressure": _safe_avg(d["native_pressure"]),
+            "native_temperature": _safe_max(d["native_temperature"]),
+            "native_templow": _safe_min(d["native_templow"]),
+            "native_wind_gust_speed": _safe_max(d["native_wind_gust_speed"]),
+            "native_wind_speed": _safe_max(d["native_wind_speed"]),
+            "wind_bearing": round(_safe_avg(d["wind_bearing"]))
+            if _safe_avg(d["wind_bearing"]) is not None
+            else None,
         }
         out["daily"].append(forecast)
-  
+
     return out
