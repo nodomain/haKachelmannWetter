@@ -3,6 +3,8 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/)
 [![GitHub Release](https://img.shields.io/github/v/release/nodomain/haKachelmannWetter)](https://github.com/nodomain/haKachelmannWetter/releases)
 
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=nodomain&repository=haKachelmannWetter&category=integration)
+
 Custom Home Assistant integration for the [KachelmannWetter API](https://api.kachelmannwetter.com/v02/_doc.html) by Meteologix AG.
 
 Provides current weather, hourly and daily forecasts, astronomical data, and automation-ready sensors — using **all 5 API endpoints** with **every available field**.
