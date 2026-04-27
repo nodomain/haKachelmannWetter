@@ -10,22 +10,30 @@
           "longitude": "Längengrad"
         }
       },
-      "reauth": {
-        "title": "Erneut authentifizieren",
-        "data": { "api_key": "API-Key" }
+      "reauth_confirm": {
+        "title": "KachelmannWetter erneut authentifizieren",
+        "description": "Dein API-Key ist nicht mehr gültig. Bitte gib einen neuen ein.",
+        "data": {
+          "api_key": "API-Key"
+        }
       }
     },
     "error": {
       "auth": "Ungültiger API-Key oder Standort nicht konfiguriert",
       "cannot_connect": "Verbindung zur KachelmannWetter API nicht möglich"
     },
-    "abort": { "reauth_successful": "Erneute Authentifizierung erfolgreich" }
+    "abort": {
+      "already_configured": "Dieser Standort ist bereits konfiguriert",
+      "reauth_successful": "Erneute Authentifizierung erfolgreich"
+    }
   },
   "options": {
     "step": {
       "init": {
         "title": "KachelmannWetter Optionen",
-        "data": { "update_interval": "Aktualisierungsintervall (Sekunden)" }
+        "data": {
+          "update_interval": "Aktualisierungsintervall (Sekunden, 60–3600)"
+        }
       }
     }
   },
