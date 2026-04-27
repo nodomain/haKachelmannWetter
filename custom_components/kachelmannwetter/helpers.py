@@ -28,7 +28,9 @@ WEATHER_SYMBOL_MAP: dict[str, str] = {
     "snowrain": "snowy-rainy",
     "snowrainshowers": "snowy-rainy",
     "freezingrain": "exceptional",
+    "hail": "hail",
     "wind": "windy",
+    "windvariant": "windy-variant",
 }
 
 # Severity order for picking the "worst" condition of a day.
@@ -37,11 +39,13 @@ _CONDITION_SEVERITY: list[str] = [
     "partlycloudy",
     "cloudy",
     "windy",
+    "windy-variant",
     "fog",
     "rainy",
     "pouring",
     "snowy",
     "snowy-rainy",
+    "hail",
     "lightning-rainy",
     "exceptional",
 ]
@@ -223,8 +227,7 @@ def normalize_daily_from_6h(data: dict[str, Any]) -> list[dict[str, Any]]:
             "native_templow": _safe_min(d["native_templow"]),
             "native_wind_gust_speed": _safe_max(d["native_wind_gust_speed"]),
             "native_wind_speed": _safe_max(d["native_wind_speed"]),
-            "wind_bearing": round(_safe_avg(d["wind_bearing"]))
-            if _safe_avg(d["wind_bearing"]) is not None else None,
+            "wind_bearing": round(avg) if (avg := _safe_avg(d["wind_bearing"])) is not None else None,
             "_global_radiation": _safe_sum(d["global_radiation"]),
             "_sun_hours": _safe_sum(d["sun_hours"]),
         })

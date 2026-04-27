@@ -17,7 +17,7 @@ Provides current weather, hourly and daily forecasts, astronomical data, and aut
 - **Daily forecast** (10+ days) with precipitation probability from 14-day trend
 - Automatic `clear-night` condition at nighttime
 
-### Sensors (31)
+### Sensors (33)
 
 | Sensor | Source |
 |---|---|
@@ -40,7 +40,7 @@ Provides current weather, hourly and daily forecasts, astronomical data, and aut
 | Moonrise / Moonset | Astronomy |
 | Moon illumination (%) / Moon phase | Astronomy |
 | Next full moon / Next new moon | Astronomy |
-| API requests remaining | Rate limit |
+| API requests remaining | Rate limit (diagnostic, disabled by default) |
 
 ### Binary Sensors (4)
 
@@ -52,10 +52,16 @@ Provides current weather, hourly and daily forecasts, astronomical data, and aut
 | Daytime | Current `isDay` field |
 
 ### Additional
-- Device registration with manufacturer info
-- Diagnostics support (debug download from HA UI)
+- Device registration with manufacturer info (Meteologix AG)
+- Diagnostics support (debug download from HA UI, API key redacted)
 - German and English translations
-- HACS compatible
+- State-dependent icons via `icons.json`
+- Parallel API fetching with 10s timeout
+- Config flow pre-fills home coordinates
+- Duplicate location detection (unique ID)
+- Automatic reauth flow on expired API keys
+- Options flow with live reload (update interval)
+- HACS compatible with brand assets
 
 ## Prerequisites
 

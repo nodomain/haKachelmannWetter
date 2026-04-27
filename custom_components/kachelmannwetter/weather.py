@@ -27,7 +27,7 @@ def _clean_forecast(raw: list[dict] | None) -> list[Forecast] | None:
     if not raw:
         return None
     return [
-        {k: v for k, v in entry.items() if not k.startswith("_")}
+        Forecast(**{k: v for k, v in entry.items() if not k.startswith("_")})  # type: ignore[typeddict-item]
         for entry in raw
     ]
 
@@ -63,6 +63,14 @@ class KachelmannWeather(CoordinatorEntity, WeatherEntity):
         super().__init__(coordinator)
         self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}_weather"
         self._attr_device_info = device_info
+
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        super()._handle_coordinator_update()
+        # Notify forecast subscribers that new data is available
+        self.hass.async_create_task(
+            self.async_update_listeners(("daily", "hourly"))
+        )
 
     def _current(self) -> dict:
         """Return current weather data dict."""

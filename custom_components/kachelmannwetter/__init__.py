@@ -19,7 +19,6 @@ from .const import (
     DEFAULT_UPDATE_INTERVAL,
 )
 from .coordinator import KachelmannDataUpdateCoordinator
-from .exceptions import InvalidAuth
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,20 +35,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     coordinator = KachelmannDataUpdateCoordinator(
-        hass, api_key, latitude, longitude, update_interval_seconds=update_interval
+        hass,
+        config_entry=entry,
+        api_key=api_key,
+        latitude=latitude,
+        longitude=longitude,
+        update_interval_seconds=update_interval,
     )
 
     try:
         await coordinator.async_config_entry_first_refresh()
-    except InvalidAuth as err:
-        raise ConfigEntryAuthFailed from err
+    except ConfigEntryAuthFailed:
+        raise
     except Exception as err:
         raise ConfigEntryNotReady from err
+
+    # Use coordinates as device identifier for stable identity across re-adds
+    device_id = f"{latitude}_{longitude}"
 
     hass.data[DOMAIN][entry.entry_id] = {
         "coordinator": coordinator,
         "device_info": DeviceInfo(
-            identifiers={(DOMAIN, entry.entry_id)},
+            identifiers={(DOMAIN, device_id)},
             name="KachelmannWetter",
             manufacturer=MANUFACTURER,
             entry_type=DeviceEntryType.SERVICE,

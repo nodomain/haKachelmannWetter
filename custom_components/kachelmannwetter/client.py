@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 import logging
 
+import aiohttp
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -25,7 +26,9 @@ class KachelmannClient:
     async def _get(self, url: str) -> dict[str, Any]:
         headers = {"X-API-Key": self._api_key}
         _LOGGER.debug("GET %s", url)
-        resp = await self._session.get(url, headers=headers)
+        resp = await self._session.get(
+            url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)
+        )
 
         if resp.status == 401:
             raise InvalidAuth("Invalid API key")

@@ -1,10 +1,13 @@
 """DataUpdateCoordinator for KachelmannWetter."""
 from __future__ import annotations
 
+import asyncio
 from datetime import timedelta
 from logging import Logger, getLogger
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
@@ -31,11 +34,13 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(
         self,
         hass: HomeAssistant,
+        config_entry: ConfigEntry,
         api_key: str,
         latitude: float,
         longitude: float,
         update_interval_seconds: int | None = None,
     ) -> None:
+        """Initialize the coordinator."""
         self.api_key = api_key
         self.latitude = latitude
         self.longitude = longitude
@@ -48,20 +53,29 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="kachelmannwetter",
+            config_entry=config_entry,
             update_interval=timedelta(seconds=update_interval_seconds),
         )
 
     async def _async_update_data(self) -> dict:
-        """Fetch all endpoints and normalize."""
+        """Fetch all endpoints in parallel and normalize."""
         lat, lon = self.latitude, self.longitude
         _LOGGER.debug("Updating data for %s,%s", lat, lon)
         try:
-            # Fetch all endpoints
-            current_raw = await self.client.async_get_current(lat, lon)
-            forecast_1h_raw = await self.client.async_get_forecast_1h(lat, lon)
-            forecast_6h_raw = await self.client.async_get_forecast_6h(lat, lon)
-            trend14_raw = await self.client.async_get_trend14days(lat, lon)
-            astronomy_raw = await self.client.async_get_astronomy(lat, lon)
+            # Fetch all endpoints in parallel
+            (
+                current_raw,
+                forecast_1h_raw,
+                forecast_6h_raw,
+                trend14_raw,
+                astronomy_raw,
+            ) = await asyncio.gather(
+                self.client.async_get_current(lat, lon),
+                self.client.async_get_forecast_1h(lat, lon),
+                self.client.async_get_forecast_6h(lat, lon),
+                self.client.async_get_trend14days(lat, lon),
+                self.client.async_get_astronomy(lat, lon),
+            )
 
             # Normalize
             current = normalize_current(current_raw or {})
@@ -70,7 +84,7 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
             trend14 = normalize_trend14(trend14_raw or {})
             astronomy = normalize_astronomy(astronomy_raw or {})
 
-            # Enrich daily forecast with trend14 data (precipitation probability)
+            # Enrich daily forecast with trend14 data
             _enrich_daily_with_trend(daily, trend14)
 
             return {
@@ -92,13 +106,14 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
             )
             if retry:
                 async_call_later(
-                    self.hass, retry,
+                    self.hass,
+                    retry,
                     lambda _now: self.async_request_refresh(),
                 )
             raise UpdateFailed("Rate limited by Kachelmann API") from err
 
-        except InvalidAuth:
-            raise
+        except InvalidAuth as err:
+            raise ConfigEntryAuthFailed from err
 
         except Exception as err:
             raise UpdateFailed(f"Error fetching data: {err}") from err
@@ -108,7 +123,6 @@ def _enrich_daily_with_trend(
     daily: list[dict], trend14: list[dict]
 ) -> None:
     """Merge precipitation_probability from trend14 into daily forecasts."""
-    # Build a lookup by date string
     trend_by_date: dict[str, dict] = {}
     for t in trend14:
         d = t.get("date")
@@ -116,8 +130,6 @@ def _enrich_daily_with_trend(
             trend_by_date[d] = t
 
     for day in daily:
-        # daily datetime is RFC3339 like "2026-04-27T12:00:00+00:00"
-        # trend date is like "2026-04-27"
         dt_str = day.get("datetime", "")
         date_only = dt_str[:10] if dt_str else ""
         trend = trend_by_date.get(date_only, {})

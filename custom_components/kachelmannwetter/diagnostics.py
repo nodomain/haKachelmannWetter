@@ -3,10 +3,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, CONF_API_KEY
+
+TO_REDACT = {CONF_API_KEY}
 
 
 async def async_get_config_entry_diagnostics(
@@ -14,19 +17,10 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
-
-    # Redact the API key
-    config_data = dict(entry.data)
-    if CONF_API_KEY in config_data:
-        key = config_data[CONF_API_KEY]
-        config_data[CONF_API_KEY] = (
-            f"{key[:8]}...{key[-4:]}" if len(key) > 12 else "***"
-        )
-
     data = coordinator.data or {}
 
     return {
-        "config": config_data,
+        "config": async_redact_data(dict(entry.data), TO_REDACT),
         "options": dict(entry.options),
         "coordinator": {
             "last_update_success": coordinator.last_update_success,
@@ -42,19 +36,13 @@ async def async_get_config_entry_diagnostics(
             ),
         },
         "forecast_daily_first": (
-            data.get("forecast_daily", [None])[0]
-            if data.get("forecast_daily")
-            else None
+            data["forecast_daily"][0] if data.get("forecast_daily") else None
         ),
         "forecast_hourly_first": (
-            data.get("forecast_hourly", [None])[0]
-            if data.get("forecast_hourly")
-            else None
+            data["forecast_hourly"][0] if data.get("forecast_hourly") else None
         ),
         "trend14_first": (
-            data.get("trend14", [None])[0]
-            if data.get("trend14")
-            else None
+            data["trend14"][0] if data.get("trend14") else None
         ),
         "astronomy_today": (
             data.get("astronomy", {}).get("days", [None])[0]
@@ -65,4 +53,5 @@ async def async_get_config_entry_diagnostics(
             "next_full_moon": data.get("astronomy", {}).get("next_full_moon"),
             "next_new_moon": data.get("astronomy", {}).get("next_new_moon"),
         },
+        "rate_limit": data.get("rate_limit", {}),
     }

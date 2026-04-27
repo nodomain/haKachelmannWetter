@@ -64,11 +64,25 @@ class KachelmannConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
             else:
                 return self.async_create_entry(
-                    title="KachelmannWetter", data=user_input
+                    title=f"KachelmannWetter ({lat}, {lon})", data=user_input
                 )
 
         return self.async_show_form(
-            step_id="user", data_schema=USER_SCHEMA, errors=errors
+            step_id="user", data_schema=self._get_user_schema(), errors=errors
+        )
+
+    def _get_user_schema(self) -> vol.Schema:
+        """Return the user schema with home coordinates as defaults."""
+        return vol.Schema(
+            {
+                vol.Required(CONF_API_KEY): str,
+                vol.Required(
+                    CONF_LATITUDE, default=self.hass.config.latitude
+                ): vol.Coerce(float),
+                vol.Required(
+                    CONF_LONGITUDE, default=self.hass.config.longitude
+                ): vol.Coerce(float),
+            }
         )
 
     async def async_step_reauth(
