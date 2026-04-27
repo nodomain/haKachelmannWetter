@@ -46,7 +46,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "coordinator": coordinator,
         "device_info": DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
-            name=f"KachelmannWetter ({latitude}, {longitude})",
+            name="KachelmannWetter",
             manufacturer=MANUFACTURER,
             entry_type="service",
             configuration_url="https://kachelmannwetter.com",

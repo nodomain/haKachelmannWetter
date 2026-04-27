@@ -12,27 +12,20 @@
       },
       "reauth": {
         "title": "Re-authenticate",
-        "description": "Your API key is invalid. Please enter a new one.",
-        "data": {
-          "api_key": "API Key"
-        }
+        "data": { "api_key": "API Key" }
       }
     },
     "error": {
       "auth": "Invalid API key or location not configured",
       "cannot_connect": "Cannot connect to KachelmannWetter API"
     },
-    "abort": {
-      "reauth_successful": "Re-authentication successful"
-    }
+    "abort": { "reauth_successful": "Re-authentication successful" }
   },
   "options": {
     "step": {
       "init": {
         "title": "KachelmannWetter Options",
-        "data": {
-          "update_interval": "Update interval (seconds)"
-        }
+        "data": { "update_interval": "Update interval (seconds)" }
       }
     }
   },
@@ -41,19 +34,32 @@
       "dew_point": { "name": "Dew point" },
       "precipitation_1h": { "name": "Precipitation (1h)" },
       "snow_height": { "name": "Snow height" },
+      "snow_amount": { "name": "Fresh snow" },
+      "sun_hours_current": { "name": "Sunshine duration (1h)" },
       "cloud_coverage_low": { "name": "Cloud coverage low" },
       "cloud_coverage_medium": { "name": "Cloud coverage medium" },
       "cloud_coverage_high": { "name": "Cloud coverage high" },
-      "sun_hours": { "name": "Sunshine duration (1h)" },
+      "global_radiation_hourly": { "name": "Global radiation (current hour)" },
       "global_radiation_today": { "name": "Global radiation today" },
       "sun_hours_today": { "name": "Sunshine hours today" },
       "wind_gust_max_today": { "name": "Wind gust max today" },
       "global_radiation_tomorrow": { "name": "Global radiation tomorrow" },
-      "sun_hours_tomorrow": { "name": "Sunshine hours tomorrow" }
+      "sun_hours_tomorrow": { "name": "Sunshine hours tomorrow" },
+      "precipitation_probability_today": { "name": "Precipitation probability today" },
+      "precipitation_probability_tomorrow": { "name": "Precipitation probability tomorrow" },
+      "sun_hours_relative_today": { "name": "Sunshine relative today" },
+      "sunrise": { "name": "Sunrise" },
+      "sunset": { "name": "Sunset" },
+      "moon_illumination": { "name": "Moon illumination" },
+      "moon_phase": { "name": "Moon phase" },
+      "next_full_moon": { "name": "Next full moon" },
+      "next_new_moon": { "name": "Next new moon" }
     },
     "binary_sensor": {
       "rain_expected_3h": { "name": "Rain expected (3h)" },
-      "frost_expected_tonight": { "name": "Frost expected tonight" }
+      "frost_expected_tonight": { "name": "Frost expected tonight" },
+      "thunderstorm_expected": { "name": "Thunderstorm expected" },
+      "is_day": { "name": "Daytime" }
     }
   }
 }

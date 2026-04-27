@@ -39,7 +39,6 @@ class KachelmannClient:
                         pass
             raise RateLimitError("Rate limit exceeded", retry_after=retry_after)
 
-        # Log rate-limit info for debugging
         remaining = resp.headers.get("x-ratelimit-remaining")
         if remaining is not None:
             _LOGGER.debug("Rate limit remaining: %s", remaining)
@@ -47,24 +46,46 @@ class KachelmannClient:
         resp.raise_for_status()
         return await resp.json()
 
+    # --- Current Weather ---
+
     async def async_get_current(
         self, latitude: float, longitude: float
     ) -> dict[str, Any]:
         """Fetch current weather conditions."""
         return await self._get(f"{API_BASE}/current/{latitude}/{longitude}")
 
-    async def async_get_forecast_6h(
-        self, latitude: float, longitude: float
-    ) -> dict[str, Any]:
-        """Fetch 6-hourly forecast (used for daily aggregation)."""
-        return await self._get(
-            f"{API_BASE}/forecast/{latitude}/{longitude}/advanced/6h"
-        )
+    # --- Forecasts ---
 
     async def async_get_forecast_1h(
         self, latitude: float, longitude: float
     ) -> dict[str, Any]:
-        """Fetch hourly forecast (24h ahead)."""
+        """Fetch hourly forecast (24h ahead, advanced parameters)."""
         return await self._get(
             f"{API_BASE}/forecast/{latitude}/{longitude}/advanced/1h"
+        )
+
+    async def async_get_forecast_6h(
+        self, latitude: float, longitude: float
+    ) -> dict[str, Any]:
+        """Fetch 6-hourly forecast (advanced parameters, ~10 days)."""
+        return await self._get(
+            f"{API_BASE}/forecast/{latitude}/{longitude}/advanced/6h"
+        )
+
+    async def async_get_trend14days(
+        self, latitude: float, longitude: float
+    ) -> dict[str, Any]:
+        """Fetch 14-day trend forecast with precipitation probability."""
+        return await self._get(
+            f"{API_BASE}/forecast/{latitude}/{longitude}/trend14days"
+        )
+
+    # --- Tools ---
+
+    async def async_get_astronomy(
+        self, latitude: float, longitude: float
+    ) -> dict[str, Any]:
+        """Fetch astronomical data (sun/moon rise/set, moon phase)."""
+        return await self._get(
+            f"{API_BASE}/tools/astronomy/{latitude}/{longitude}"
         )

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Callable
-from logging import Logger, getLogger
 from datetime import datetime, timedelta, timezone
 
 from homeassistant.components.binary_sensor import (
@@ -17,8 +16,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-
-_LOGGER: Logger = getLogger(__package__)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -59,11 +56,28 @@ def _frost_expected_tonight(data: dict) -> bool | None:
     daily = data.get("forecast_daily", [])
     if not daily:
         return None
-    # Today's forecast is index 0
     templow = daily[0].get("native_templow")
     if templow is None:
         return None
     return templow < 0
+
+
+def _thunderstorm_expected(data: dict) -> bool | None:
+    """Check if thunderstorm is expected from trend14 data."""
+    trend = data.get("trend14", [])
+    if not trend:
+        return None
+    # Check today and tomorrow
+    for day in trend[:2]:
+        ts = day.get("thunderstorm")
+        if ts is not None and ts:
+            return True
+    return False
+
+
+def _is_day(data: dict) -> bool | None:
+    """Return whether it's currently daytime."""
+    return data.get("current", {}).get("is_day")
 
 
 BINARY_SENSOR_DESCRIPTIONS: tuple[KachelmannBinarySensorDescription, ...] = (
@@ -81,6 +95,21 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[KachelmannBinarySensorDescription, ...] = (
         device_class=BinarySensorDeviceClass.COLD,
         icon="mdi:snowflake-alert",
         is_on_fn=_frost_expected_tonight,
+    ),
+    KachelmannBinarySensorDescription(
+        key="thunderstorm_expected",
+        translation_key="thunderstorm_expected",
+        name="Thunderstorm expected",
+        device_class=BinarySensorDeviceClass.SAFETY,
+        icon="mdi:weather-lightning",
+        is_on_fn=_thunderstorm_expected,
+    ),
+    KachelmannBinarySensorDescription(
+        key="is_day",
+        translation_key="is_day",
+        name="Daytime",
+        icon="mdi:weather-sunny",
+        is_on_fn=_is_day,
     ),
 )
 
@@ -107,13 +136,7 @@ class KachelmannBinarySensor(CoordinatorEntity, BinarySensorEntity):
     _attr_has_entity_name = True
     _attr_attribution = "Data provided by KachelmannWetter / Meteologix AG"
 
-    def __init__(
-        self,
-        coordinator,
-        device_info,
-        entry: ConfigEntry,
-        description: KachelmannBinarySensorDescription,
-    ) -> None:
+    def __init__(self, coordinator, device_info, entry, description) -> None:
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}_{description.key}"
@@ -121,5 +144,4 @@ class KachelmannBinarySensor(CoordinatorEntity, BinarySensorEntity):
 
     @property
     def is_on(self) -> bool | None:
-        """Return true if the binary sensor is on."""
         return self.entity_description.is_on_fn(self.coordinator.data or {})

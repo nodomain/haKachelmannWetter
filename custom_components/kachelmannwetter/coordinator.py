@@ -13,14 +13,20 @@ from homeassistant.helpers.event import async_call_later
 
 from .client import KachelmannClient
 from .exceptions import RateLimitError, InvalidAuth
-from .helpers import normalize_current, normalize_daily, normalize_hourly
+from .helpers import (
+    normalize_current,
+    normalize_daily_from_6h,
+    normalize_hourly,
+    normalize_trend14,
+    normalize_astronomy,
+)
 from .const import DEFAULT_UPDATE_INTERVAL
 
 _LOGGER: Logger = getLogger(__package__)
 
 
 class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
-    """Fetch current + daily + hourly data from KachelmannWetter API."""
+    """Fetch all data from KachelmannWetter API."""
 
     def __init__(
         self,
@@ -46,27 +52,33 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
     async def _async_update_data(self) -> dict:
-        """Fetch all data from the API and normalize it."""
-        _LOGGER.debug("Updating data for %s,%s", self.latitude, self.longitude)
+        """Fetch all endpoints and normalize."""
+        lat, lon = self.latitude, self.longitude
+        _LOGGER.debug("Updating data for %s,%s", lat, lon)
         try:
-            current_raw = await self.client.async_get_current(
-                self.latitude, self.longitude
-            )
-            forecast_6h_raw = await self.client.async_get_forecast_6h(
-                self.latitude, self.longitude
-            )
-            forecast_1h_raw = await self.client.async_get_forecast_1h(
-                self.latitude, self.longitude
-            )
+            # Fetch all endpoints
+            current_raw = await self.client.async_get_current(lat, lon)
+            forecast_1h_raw = await self.client.async_get_forecast_1h(lat, lon)
+            forecast_6h_raw = await self.client.async_get_forecast_6h(lat, lon)
+            trend14_raw = await self.client.async_get_trend14days(lat, lon)
+            astronomy_raw = await self.client.async_get_astronomy(lat, lon)
 
+            # Normalize
             current = normalize_current(current_raw or {})
-            daily = normalize_daily(forecast_6h_raw or {})
             hourly = normalize_hourly(forecast_1h_raw or {})
+            daily = normalize_daily_from_6h(forecast_6h_raw or {})
+            trend14 = normalize_trend14(trend14_raw or {})
+            astronomy = normalize_astronomy(astronomy_raw or {})
+
+            # Enrich daily forecast with trend14 data (precipitation probability)
+            _enrich_daily_with_trend(daily, trend14)
 
             return {
                 "current": current,
-                "forecast_daily": daily,
                 "forecast_hourly": hourly,
+                "forecast_daily": daily,
+                "trend14": trend14,
+                "astronomy": astronomy,
             }
 
         except RateLimitError as err:
@@ -76,15 +88,43 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
             )
             if retry:
                 async_call_later(
-                    self.hass,
-                    retry,
+                    self.hass, retry,
                     lambda _now: self.async_request_refresh(),
                 )
             raise UpdateFailed("Rate limited by Kachelmann API") from err
 
         except InvalidAuth:
-            # Let HA trigger reauth flow
             raise
 
         except Exception as err:
             raise UpdateFailed(f"Error fetching data: {err}") from err
+
+
+def _enrich_daily_with_trend(
+    daily: list[dict], trend14: list[dict]
+) -> None:
+    """Merge precipitation_probability from trend14 into daily forecasts."""
+    # Build a lookup by date string
+    trend_by_date: dict[str, dict] = {}
+    for t in trend14:
+        d = t.get("date")
+        if d:
+            trend_by_date[d] = t
+
+    for day in daily:
+        # daily datetime is RFC3339 like "2026-04-27T12:00:00+00:00"
+        # trend date is like "2026-04-27"
+        dt_str = day.get("datetime", "")
+        date_only = dt_str[:10] if dt_str else ""
+        trend = trend_by_date.get(date_only, {})
+        if trend:
+            day["precipitation_probability"] = trend.get(
+                "precipitation_probability_1mm"
+            )
+            day["_precipitation_probability_10mm"] = trend.get(
+                "precipitation_probability_10mm"
+            )
+            day["_precipitation_type"] = trend.get("precipitation_type")
+            day["_precipitation_word"] = trend.get("precipitation_word")
+            day["_thunderstorm"] = trend.get("thunderstorm")
+            day["_sun_hours_relative"] = trend.get("sun_hours_relative")
