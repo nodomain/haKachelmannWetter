@@ -3,9 +3,10 @@
   "name": "KachelmannWetter",
   "config_flow": true,
   "version": "0.3.0",
-  "documentation": "https://github.com/manutoky/haKachelmannWetter",
+  "documentation": "https://github.com/nodomain/haKachelmannWetter",
+  "issue_tracker": "https://github.com/nodomain/haKachelmannWetter/issues",
   "requirements": [],
   "dependencies": [],
-  "codeowners": [],
+  "codeowners": ["@nodomain"],
   "iot_class": "cloud_polling"
 }
