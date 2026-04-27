@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "KachelmannWetter",
-        "description": "Enter your KachelmannWetter API key and coordinates.",
+        "description": "Enter your KachelmannWetter API key and the coordinates of your configured API location.",
         "data": {
           "api_key": "API Key",
           "latitude": "Latitude",
@@ -19,7 +19,7 @@
       }
     },
     "error": {
-      "auth": "Invalid API key",
+      "auth": "Invalid API key or location not configured",
       "cannot_connect": "Cannot connect to KachelmannWetter API"
     },
     "abort": {
@@ -34,6 +34,15 @@
           "update_interval": "Update interval (seconds)"
         }
       }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "precipitation_1h": { "name": "Precipitation (1h)" },
+      "snow_height": { "name": "Snow height" },
+      "sun_hours": { "name": "Sunshine duration (1h)" },
+      "global_radiation_today": { "name": "Global radiation (today)" },
+      "sun_hours_today": { "name": "Sunshine hours (today)" }
     }
   }
 }

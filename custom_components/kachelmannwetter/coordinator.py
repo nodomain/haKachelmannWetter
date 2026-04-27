@@ -11,16 +11,17 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.helpers.event import async_call_later
 
-from .exceptions import RateLimitError, InvalidAuth
-
 from .client import KachelmannClient
-from .helpers import normalize_current, normalize_forecasts
+from .exceptions import RateLimitError, InvalidAuth
+from .helpers import normalize_current, normalize_daily, normalize_hourly
 from .const import DEFAULT_UPDATE_INTERVAL
 
 _LOGGER: Logger = getLogger(__package__)
 
 
 class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
+    """Fetch current + daily + hourly data from KachelmannWetter API."""
+
     def __init__(
         self,
         hass: HomeAssistant,
@@ -33,7 +34,7 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
         self.latitude = latitude
         self.longitude = longitude
         self.client = KachelmannClient(hass, api_key)
-        _LOGGER.debug("Coordinator initialized for %s,%s", latitude, longitude)
+
         if update_interval_seconds is None:
             update_interval_seconds = DEFAULT_UPDATE_INTERVAL
 
@@ -45,23 +46,45 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
     async def _async_update_data(self) -> dict:
-        _LOGGER.debug("Starting data update for %s,%s", self.latitude, self.longitude)
+        """Fetch all data from the API and normalize it."""
+        _LOGGER.debug("Updating data for %s,%s", self.latitude, self.longitude)
         try:
-            current = await self.client.async_get_current(self.latitude, self.longitude)
-            forecast = await self.client.async_get_forecast(self.latitude, self.longitude)
-            # normalize current condition fields for consistent entity mapping
-            normalized_current = normalize_current(current or {})
-            normalized_forecasts = normalize_forecasts(forecast or {})
-            return {"current": normalized_current, "forecast": normalized_forecasts}
+            current_raw = await self.client.async_get_current(
+                self.latitude, self.longitude
+            )
+            forecast_6h_raw = await self.client.async_get_forecast_6h(
+                self.latitude, self.longitude
+            )
+            forecast_1h_raw = await self.client.async_get_forecast_1h(
+                self.latitude, self.longitude
+            )
+
+            current = normalize_current(current_raw or {})
+            daily = normalize_daily(forecast_6h_raw or {})
+            hourly = normalize_hourly(forecast_1h_raw or {})
+
+            return {
+                "current": current,
+                "forecast_daily": daily,
+                "forecast_hourly": hourly,
+            }
+
         except RateLimitError as err:
-            retry = getattr(err, "retry_after", None)
-            _LOGGER.warning("Rate limited by Kachelmann API, retry after %s seconds", retry)
+            retry = err.retry_after
+            _LOGGER.warning(
+                "Rate limited by Kachelmann API, retry after %s s", retry
+            )
             if retry:
-                # schedule a refresh after retry seconds
-                async_call_later(self.hass, retry, lambda _now: self.async_request_refresh())
+                async_call_later(
+                    self.hass,
+                    retry,
+                    lambda _now: self.async_request_refresh(),
+                )
             raise UpdateFailed("Rate limited by Kachelmann API") from err
-        except InvalidAuth as err:
-            _LOGGER.error("Invalid API key for KachelmannWetter: %s", err)
+
+        except InvalidAuth:
+            # Let HA trigger reauth flow
             raise
+
         except Exception as err:
             raise UpdateFailed(f"Error fetching data: {err}") from err

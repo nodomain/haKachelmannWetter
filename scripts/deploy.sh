@@ -30,11 +30,13 @@ echo "  Target: $TARGET"
 mkdir -p "$TARGET"
 mkdir -p "$TARGET/translations"
 
-# Sync files (delete removed files too)
-rsync -av --delete \
-    --exclude '__pycache__' \
-    --exclude '*.pyc' \
-    "$SOURCE/" "$TARGET/"
+# Remove old files and copy fresh
+rm -rf "$TARGET"/*
+cp -R "$SOURCE"/* "$TARGET/"
+
+# Clean up pycache
+find "$TARGET" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
+find "$TARGET" -name '*.pyc' -delete 2>/dev/null || true
 
 echo ""
 echo "Done. Restart Home Assistant to apply changes."
