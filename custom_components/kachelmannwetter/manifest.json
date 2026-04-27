@@ -2,9 +2,11 @@
   "domain": "kachelmannwetter",
   "name": "KachelmannWetter",
   "config_flow": true,
-  "version": "0.1.0",
-  "documentation": "https://github.com/your-repo/kachelmannwetter-homeassistant",
+  "version": "1.0.0",
+  "documentation": "https://github.com/nodomain/haKachelmannWetter",
+  "issue_tracker": "https://github.com/nodomain/haKachelmannWetter/issues",
   "requirements": [],
   "dependencies": [],
-  "codeowners": []
+  "codeowners": ["@nodomain"],
+  "iot_class": "cloud_polling"
 }

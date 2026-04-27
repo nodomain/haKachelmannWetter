@@ -1,0 +1,135 @@
+{
+  "entity": {
+    "sensor": {
+      "moon_phase": {
+        "default": "mdi:moon-waning-gibbous",
+        "state": {
+          "0": "mdi:moon-new",
+          "10": "mdi:moon-waxing-crescent",
+          "20": "mdi:moon-waxing-crescent",
+          "30": "mdi:moon-first-quarter",
+          "40": "mdi:moon-waxing-gibbous",
+          "50": "mdi:moon-full",
+          "60": "mdi:moon-waning-gibbous",
+          "70": "mdi:moon-last-quarter",
+          "80": "mdi:moon-waning-crescent",
+          "90": "mdi:moon-waning-crescent",
+          "100": "mdi:moon-new"
+        }
+      },
+      "precipitation_1h": {
+        "default": "mdi:weather-rainy"
+      },
+      "snow_height": {
+        "default": "mdi:snowflake"
+      },
+      "snow_amount": {
+        "default": "mdi:snowflake"
+      },
+      "dew_point": {
+        "default": "mdi:thermometer-water"
+      },
+      "sun_hours_current": {
+        "default": "mdi:weather-sunny"
+      },
+      "sun_hours_today": {
+        "default": "mdi:weather-sunny"
+      },
+      "sun_hours_tomorrow": {
+        "default": "mdi:weather-sunny-alert"
+      },
+      "sun_hours_relative_today": {
+        "default": "mdi:weather-sunny"
+      },
+      "global_radiation_hourly": {
+        "default": "mdi:solar-power"
+      },
+      "global_radiation_today": {
+        "default": "mdi:solar-power"
+      },
+      "global_radiation_tomorrow": {
+        "default": "mdi:solar-power-variant"
+      },
+      "cloud_coverage_low": {
+        "default": "mdi:cloud-outline"
+      },
+      "cloud_coverage_medium": {
+        "default": "mdi:cloud"
+      },
+      "cloud_coverage_high": {
+        "default": "mdi:clouds"
+      },
+      "wind_gust_max_today": {
+        "default": "mdi:weather-windy"
+      },
+      "precipitation_probability_today": {
+        "default": "mdi:weather-rainy"
+      },
+      "precipitation_probability_tomorrow": {
+        "default": "mdi:weather-rainy"
+      },
+      "sunrise": {
+        "default": "mdi:weather-sunset-up"
+      },
+      "sunset": {
+        "default": "mdi:weather-sunset-down"
+      },
+      "solar_transit": {
+        "default": "mdi:sun-clock"
+      },
+      "civil_dawn": {
+        "default": "mdi:weather-sunset-up"
+      },
+      "civil_dusk": {
+        "default": "mdi:weather-sunset-down"
+      },
+      "nautical_dawn": {
+        "default": "mdi:weather-sunset-up"
+      },
+      "nautical_dusk": {
+        "default": "mdi:weather-sunset-down"
+      },
+      "astronomical_dawn": {
+        "default": "mdi:weather-night"
+      },
+      "astronomical_dusk": {
+        "default": "mdi:weather-night"
+      },
+      "moon_illumination": {
+        "default": "mdi:moon-waning-gibbous"
+      },
+      "moon_rise": {
+        "default": "mdi:moon-rising"
+      },
+      "moon_set": {
+        "default": "mdi:moon-setting"
+      },
+      "next_full_moon": {
+        "default": "mdi:moon-full"
+      },
+      "next_new_moon": {
+        "default": "mdi:moon-new"
+      },
+      "api_requests_remaining": {
+        "default": "mdi:api"
+      }
+    },
+    "binary_sensor": {
+      "rain_expected_3h": {
+        "default": "mdi:weather-pouring"
+      },
+      "frost_expected_tonight": {
+        "default": "mdi:snowflake-alert"
+      },
+      "thunderstorm_expected": {
+        "default": "mdi:weather-lightning"
+      },
+      "is_day": {
+        "default": "mdi:weather-sunny",
+        "state": {
+          "off": "mdi:weather-night"
+        }
+      }
+    }
+  }
+}

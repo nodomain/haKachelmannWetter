@@ -1,0 +1,83 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "KachelmannWetter",
+        "description": "Gib deinen KachelmannWetter API-Key und die Koordinaten deines konfigurierten API-Standorts ein.",
+        "data": {
+          "api_key": "API-Key",
+          "latitude": "Breitengrad",
+          "longitude": "Längengrad"
+        }
+      },
+      "reauth_confirm": {
+        "title": "KachelmannWetter erneut authentifizieren",
+        "description": "Dein API-Key ist nicht mehr gültig. Bitte gib einen neuen ein.",
+        "data": {
+          "api_key": "API-Key"
+        }
+      }
+    },
+    "error": {
+      "auth": "Ungültiger API-Key oder Standort nicht konfiguriert",
+      "cannot_connect": "Verbindung zur KachelmannWetter API nicht möglich"
+    },
+    "abort": {
+      "already_configured": "Dieser Standort ist bereits konfiguriert",
+      "reauth_successful": "Erneute Authentifizierung erfolgreich"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "KachelmannWetter Optionen",
+        "data": {
+          "update_interval": "Aktualisierungsintervall (Sekunden, 60–3600)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "dew_point": { "name": "Taupunkt" },
+      "precipitation_1h": { "name": "Niederschlag (1h)" },
+      "snow_height": { "name": "Schneehöhe" },
+      "snow_amount": { "name": "Neuschnee" },
+      "sun_hours_current": { "name": "Sonnenscheindauer (1h)" },
+      "cloud_coverage_low": { "name": "Bewölkung tief" },
+      "cloud_coverage_medium": { "name": "Bewölkung mittel" },
+      "cloud_coverage_high": { "name": "Bewölkung hoch" },
+      "global_radiation_hourly": { "name": "Globalstrahlung (aktuelle Stunde)" },
+      "global_radiation_today": { "name": "Globalstrahlung heute" },
+      "sun_hours_today": { "name": "Sonnenstunden heute" },
+      "wind_gust_max_today": { "name": "Windböen-Maximum heute" },
+      "global_radiation_tomorrow": { "name": "Globalstrahlung morgen" },
+      "sun_hours_tomorrow": { "name": "Sonnenstunden morgen" },
+      "precipitation_probability_today": { "name": "Regenwahrscheinlichkeit heute" },
+      "precipitation_probability_tomorrow": { "name": "Regenwahrscheinlichkeit morgen" },
+      "sun_hours_relative_today": { "name": "Sonnenschein relativ heute" },
+      "sunrise": { "name": "Sonnenaufgang" },
+      "sunset": { "name": "Sonnenuntergang" },
+      "solar_transit": { "name": "Sonnenhöchststand" },
+      "civil_dawn": { "name": "Bürgerliche Morgendämmerung" },
+      "civil_dusk": { "name": "Bürgerliche Abenddämmerung" },
+      "nautical_dawn": { "name": "Nautische Morgendämmerung" },
+      "nautical_dusk": { "name": "Nautische Abenddämmerung" },
+      "astronomical_dawn": { "name": "Astronomische Morgendämmerung" },
+      "astronomical_dusk": { "name": "Astronomische Abenddämmerung" },
+      "moon_illumination": { "name": "Mondbeleuchtung" },
+      "moon_phase": { "name": "Mondphase" },
+      "moon_rise": { "name": "Mondaufgang" },
+      "moon_set": { "name": "Monduntergang" },
+      "next_full_moon": { "name": "Nächster Vollmond" },
+      "next_new_moon": { "name": "Nächster Neumond" },
+      "api_requests_remaining": { "name": "API-Anfragen verbleibend" }
+    },
+    "binary_sensor": {
+      "rain_expected_3h": { "name": "Regen erwartet (3h)" },
+      "frost_expected_tonight": { "name": "Frost erwartet heute Nacht" },
+      "thunderstorm_expected": { "name": "Gewitter erwartet" },
+      "is_day": { "name": "Tageslicht" }
+    }
+  }
+}

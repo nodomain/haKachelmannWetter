@@ -11,16 +11,23 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.helpers.event import async_call_later
 
-from .exceptions import RateLimitError, InvalidAuth
-
 from .client import KachelmannClient
-from .helpers import normalize_current, normalize_forecasts
+from .exceptions import RateLimitError, InvalidAuth
+from .helpers import (
+    normalize_current,
+    normalize_daily_from_6h,
+    normalize_hourly,
+    normalize_trend14,
+    normalize_astronomy,
+)
 from .const import DEFAULT_UPDATE_INTERVAL
 
 _LOGGER: Logger = getLogger(__package__)
 
 
 class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
+    """Fetch all data from KachelmannWetter API."""
+
     def __init__(
         self,
         hass: HomeAssistant,
@@ -33,7 +40,7 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
         self.latitude = latitude
         self.longitude = longitude
         self.client = KachelmannClient(hass, api_key)
-        _LOGGER.debug("Coordinator initialized for %s,%s", latitude, longitude)
+
         if update_interval_seconds is None:
             update_interval_seconds = DEFAULT_UPDATE_INTERVAL
 
@@ -45,23 +52,83 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
     async def _async_update_data(self) -> dict:
-        _LOGGER.debug("Starting data update for %s,%s", self.latitude, self.longitude)
+        """Fetch all endpoints and normalize."""
+        lat, lon = self.latitude, self.longitude
+        _LOGGER.debug("Updating data for %s,%s", lat, lon)
         try:
-            current = await self.client.async_get_current(self.latitude, self.longitude)
-            forecast = await self.client.async_get_forecast(self.latitude, self.longitude)
-            # normalize current condition fields for consistent entity mapping
-            normalized_current = normalize_current(current or {})
-            normalized_forecasts = normalize_forecasts(forecast or {})
-            return {"current": normalized_current, "forecast": normalized_forecasts}
+            # Fetch all endpoints
+            current_raw = await self.client.async_get_current(lat, lon)
+            forecast_1h_raw = await self.client.async_get_forecast_1h(lat, lon)
+            forecast_6h_raw = await self.client.async_get_forecast_6h(lat, lon)
+            trend14_raw = await self.client.async_get_trend14days(lat, lon)
+            astronomy_raw = await self.client.async_get_astronomy(lat, lon)
+
+            # Normalize
+            current = normalize_current(current_raw or {})
+            hourly = normalize_hourly(forecast_1h_raw or {})
+            daily = normalize_daily_from_6h(forecast_6h_raw or {})
+            trend14 = normalize_trend14(trend14_raw or {})
+            astronomy = normalize_astronomy(astronomy_raw or {})
+
+            # Enrich daily forecast with trend14 data (precipitation probability)
+            _enrich_daily_with_trend(daily, trend14)
+
+            return {
+                "current": current,
+                "forecast_hourly": hourly,
+                "forecast_daily": daily,
+                "trend14": trend14,
+                "astronomy": astronomy,
+                "rate_limit": {
+                    "remaining": self.client.rate_limit_remaining,
+                    "limit": self.client.rate_limit_limit,
+                },
+            }
+
         except RateLimitError as err:
-            retry = getattr(err, "retry_after", None)
-            _LOGGER.warning("Rate limited by Kachelmann API, retry after %s seconds", retry)
+            retry = err.retry_after
+            _LOGGER.warning(
+                "Rate limited by Kachelmann API, retry after %s s", retry
+            )
             if retry:
-                # schedule a refresh after retry seconds
-                async_call_later(self.hass, retry, lambda _now: self.async_request_refresh())
+                async_call_later(
+                    self.hass, retry,
+                    lambda _now: self.async_request_refresh(),
+                )
             raise UpdateFailed("Rate limited by Kachelmann API") from err
-        except InvalidAuth as err:
-            _LOGGER.error("Invalid API key for KachelmannWetter: %s", err)
+
+        except InvalidAuth:
             raise
+
         except Exception as err:
             raise UpdateFailed(f"Error fetching data: {err}") from err
+
+
+def _enrich_daily_with_trend(
+    daily: list[dict], trend14: list[dict]
+) -> None:
+    """Merge precipitation_probability from trend14 into daily forecasts."""
+    # Build a lookup by date string
+    trend_by_date: dict[str, dict] = {}
+    for t in trend14:
+        d = t.get("date")
+        if d:
+            trend_by_date[d] = t
+
+    for day in daily:
+        # daily datetime is RFC3339 like "2026-04-27T12:00:00+00:00"
+        # trend date is like "2026-04-27"
+        dt_str = day.get("datetime", "")
+        date_only = dt_str[:10] if dt_str else ""
+        trend = trend_by_date.get(date_only, {})
+        if trend:
+            day["precipitation_probability"] = trend.get(
+                "precipitation_probability_1mm"
+            )
+            day["_precipitation_probability_10mm"] = trend.get(
+                "precipitation_probability_10mm"
+            )
+            day["_precipitation_type"] = trend.get("precipitation_type")
+            day["_precipitation_word"] = trend.get("precipitation_word")
+            day["_thunderstorm"] = trend.get("thunderstorm")
+            day["_sun_hours_relative"] = trend.get("sun_hours_relative")

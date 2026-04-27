@@ -1,95 +1,124 @@
 """Weather platform for KachelmannWetter integration."""
 from __future__ import annotations
 
-from typing import Any
-from logging import Logger, getLogger
-
-from homeassistant.components.weather import WeatherEntity, WeatherEntityFeature
-from homeassistant.const import ATTR_ATTRIBUTION
+from homeassistant.components.weather import (
+    Forecast,
+    WeatherEntity,
+    WeatherEntityFeature,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, DEFAULT_NAME
-from .helpers import WEATHER_SYMBOL_DICT
+from .const import DOMAIN
 
-_LOGGER: Logger = getLogger(__package__)
+# Standard HA Forecast keys — used to strip internal _prefixed keys
+_FORECAST_KEYS = {
+    "datetime", "condition", "cloud_coverage", "humidity",
+    "native_dew_point", "native_precipitation", "native_pressure",
+    "native_temperature", "native_templow", "native_wind_gust_speed",
+    "native_wind_speed", "wind_bearing", "precipitation_probability",
+}
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    coordinator = hass.data[DOMAIN][entry.entry_id]
-    _LOGGER.debug("Adding KachelmannWeather entity for entry %s", entry.entry_id)
-    async_add_entities([KachelmannWeather(coordinator)])
+def _clean_forecast(raw: list[dict] | None) -> list[Forecast] | None:
+    """Strip internal _prefixed keys from forecast dicts."""
+    if not raw:
+        return None
+    return [
+        {k: v for k, v in entry.items() if not k.startswith("_")}
+        for entry in raw
+    ]
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the KachelmannWetter weather entity."""
+    data = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities(
+        [KachelmannWeather(data["coordinator"], data["device_info"], entry)]
+    )
 
 
 class KachelmannWeather(CoordinatorEntity, WeatherEntity):
-    def __init__(self, coordinator) -> None:
-        super().__init__(coordinator)
-        self.coordinator = coordinator
-        self._attr_name = DEFAULT_NAME
+    """Representation of KachelmannWetter weather conditions."""
 
-    @property
-    def supported_features(self) -> WeatherEntityFeature:
-        return WeatherEntityFeature.FORECAST_DAILY
+    _attr_has_entity_name = True
+    _attr_name = None  # Main feature of device — uses device name
+    _attr_attribution = "Data provided by KachelmannWetter / Meteologix AG"
+    _attr_native_temperature_unit = "°C"
+    _attr_native_pressure_unit = "hPa"
+    _attr_native_wind_speed_unit = "m/s"
+    _attr_native_precipitation_unit = "mm"
+    _attr_supported_features = (
+        WeatherEntityFeature.FORECAST_DAILY | WeatherEntityFeature.FORECAST_HOURLY
+    )
+
+    def __init__(self, coordinator, device_info, entry: ConfigEntry) -> None:
+        """Initialize the weather entity."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}_weather"
+        self._attr_device_info = device_info
+
+    def _current(self) -> dict:
+        """Return current weather data dict."""
+        return (self.coordinator.data or {}).get("current") or {}
 
     @property
     def condition(self) -> str | None:
-        current = (self.coordinator.data or {}).get("current") or {}
-        cond = current.get("condition")
-        if not cond:
-            return None
-        _LOGGER.debug("Condition = %s", cond)
-        return cond
+        """Return the current condition."""
+        return self._current().get("condition")
 
     @property
     def native_temperature(self) -> float | None:
-        current = (self.coordinator.data or {}).get("current") or {}
-        return current.get("temperature")
+        """Return the current temperature."""
+        return self._current().get("temperature")
 
     @property
-    def native_temperature_unit(self) -> str | None:
-        return "°C"
+    def humidity(self) -> float | None:
+        """Return the current humidity."""
+        return self._current().get("humidity")
 
     @property
-    def humidity(self) -> int | None:
-        current = (self.coordinator.data or {}).get("current") or {}
-        return current.get("humidity")
+    def native_pressure(self) -> float | None:
+        """Return the current pressure."""
+        return self._current().get("pressure")
 
     @property
-    def native_pressure(self) -> int | None:
-        current = (self.coordinator.data or {}).get("current") or {}
-        return current.get("pressure")
+    def native_dew_point(self) -> float | None:
+        """Return the current dew point."""
+        return self._current().get("dew_point")
 
     @property
-    def native_pressure_unit(self) -> str | None:
-        return "hPa"
+    def cloud_coverage(self) -> int | None:
+        """Return the current cloud coverage."""
+        return self._current().get("cloud_coverage")
 
     @property
     def native_wind_speed(self) -> float | None:
-        current = (self.coordinator.data or {}).get("current") or {}
-        return current.get("wind_speed")
+        """Return the current wind speed."""
+        return self._current().get("wind_speed")
 
     @property
-    def native_wind_speed_unit(self) -> str | None:
-        return "m/s"
+    def native_wind_gust_speed(self) -> float | None:
+        """Return the current wind gust speed."""
+        return self._current().get("wind_gust")
 
     @property
-    def native_wind_gust(self) -> float | None:
-        current = (self.coordinator.data or {}).get("current") or {}
-        return current.get("wind_gust")
-
-    @property
-    def wind_bearing(self) -> int | None:
-        current = (self.coordinator.data or {}).get("current") or {}
-        return current.get("wind_bearing")
-
-    @property
-    def attribution(self) -> str | None:
-        return "Data provided by KachelmannWetter"
+    def wind_bearing(self) -> float | None:
+        """Return the current wind bearing."""
+        return self._current().get("wind_bearing")
 
     async def async_forecast_daily(self) -> list[Forecast] | None:
-        # This is using the 14day trend forecast endpoint
-        forecasts: list[dict[str, Any]] = []
-        data = (self.coordinator.data or {}).get("forecast") or {}
-        return data.get("daily")
+        """Return daily forecast with only standard HA keys."""
+        data = self.coordinator.data or {}
+        return _clean_forecast(data.get("forecast_daily"))
+
+    async def async_forecast_hourly(self) -> list[Forecast] | None:
+        """Return hourly forecast with only standard HA keys."""
+        data = self.coordinator.data or {}
+        return _clean_forecast(data.get("forecast_hourly"))
