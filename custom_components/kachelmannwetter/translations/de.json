@@ -1,0 +1,59 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "KachelmannWetter",
+        "description": "Gib deinen KachelmannWetter API-Key und die Koordinaten deines konfigurierten API-Standorts ein.",
+        "data": {
+          "api_key": "API-Key",
+          "latitude": "Breitengrad",
+          "longitude": "Längengrad"
+        }
+      },
+      "reauth": {
+        "title": "Erneut authentifizieren",
+        "description": "Dein API-Key ist ungültig. Bitte gib einen neuen ein.",
+        "data": {
+          "api_key": "API-Key"
+        }
+      }
+    },
+    "error": {
+      "auth": "Ungültiger API-Key oder Standort nicht konfiguriert",
+      "cannot_connect": "Verbindung zur KachelmannWetter API nicht möglich"
+    },
+    "abort": {
+      "reauth_successful": "Erneute Authentifizierung erfolgreich"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "KachelmannWetter Optionen",
+        "data": {
+          "update_interval": "Aktualisierungsintervall (Sekunden)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "dew_point": { "name": "Taupunkt" },
+      "precipitation_1h": { "name": "Niederschlag (1h)" },
+      "snow_height": { "name": "Schneehöhe" },
+      "cloud_coverage_low": { "name": "Bewölkung tief" },
+      "cloud_coverage_medium": { "name": "Bewölkung mittel" },
+      "cloud_coverage_high": { "name": "Bewölkung hoch" },
+      "sun_hours": { "name": "Sonnenscheindauer (1h)" },
+      "global_radiation_today": { "name": "Globalstrahlung heute" },
+      "sun_hours_today": { "name": "Sonnenstunden heute" },
+      "wind_gust_max_today": { "name": "Windböen-Maximum heute" },
+      "global_radiation_tomorrow": { "name": "Globalstrahlung morgen" },
+      "sun_hours_tomorrow": { "name": "Sonnenstunden morgen" }
+    },
+    "binary_sensor": {
+      "rain_expected_3h": { "name": "Regen erwartet (3h)" },
+      "frost_expected_tonight": { "name": "Frost erwartet heute Nacht" }
+    }
+  }
+}

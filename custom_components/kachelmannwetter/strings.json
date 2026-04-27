@@ -38,11 +38,22 @@
   },
   "entity": {
     "sensor": {
+      "dew_point": { "name": "Dew point" },
       "precipitation_1h": { "name": "Precipitation (1h)" },
       "snow_height": { "name": "Snow height" },
+      "cloud_coverage_low": { "name": "Cloud coverage low" },
+      "cloud_coverage_medium": { "name": "Cloud coverage medium" },
+      "cloud_coverage_high": { "name": "Cloud coverage high" },
       "sun_hours": { "name": "Sunshine duration (1h)" },
-      "global_radiation_today": { "name": "Global radiation (today)" },
-      "sun_hours_today": { "name": "Sunshine hours (today)" }
+      "global_radiation_today": { "name": "Global radiation today" },
+      "sun_hours_today": { "name": "Sunshine hours today" },
+      "wind_gust_max_today": { "name": "Wind gust max today" },
+      "global_radiation_tomorrow": { "name": "Global radiation tomorrow" },
+      "sun_hours_tomorrow": { "name": "Sunshine hours tomorrow" }
+    },
+    "binary_sensor": {
+      "rain_expected_3h": { "name": "Rain expected (3h)" },
+      "frost_expected_tonight": { "name": "Frost expected tonight" }
     }
   }
 }

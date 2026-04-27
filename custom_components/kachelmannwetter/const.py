@@ -6,7 +6,7 @@ from homeassistant.const import Platform
 DOMAIN = "kachelmannwetter"
 DEFAULT_NAME = "KachelmannWetter"
 MANUFACTURER = "Meteologix AG / Kachelmann Gruppe"
-PLATFORMS: list[Platform] = [Platform.WEATHER, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.WEATHER, Platform.SENSOR, Platform.BINARY_SENSOR]
 
 CONF_API_KEY = "api_key"
 CONF_LATITUDE = "latitude"
