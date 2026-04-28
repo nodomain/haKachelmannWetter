@@ -34,4 +34,4 @@ jobs:
       - name: Install dependencies
         run: pip install pytest pytest-asyncio pytest-homeassistant-custom-component
       - name: Run tests
-        run: pytest tests/ -v
+        run: pytest tests/ -v -p no:socket

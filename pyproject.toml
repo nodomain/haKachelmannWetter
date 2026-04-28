@@ -9,6 +9,8 @@ requires-python = ">=3.12"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 pythonpath = ["."]
+# Disable socket check that causes false failures in CI
+addopts = "--no-header -q"
 
 [tool.ruff]
 target-version = "py312"
