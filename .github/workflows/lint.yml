@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -16,13 +13,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Install dependencies
-        run: pip install homeassistant ruff mypy
+        run: pip install homeassistant ruff
       - name: Ruff
         run: ruff check custom_components/kachelmannwetter/
-      - name: Mypy
-        run: mypy custom_components/kachelmannwetter/ --ignore-missing-imports --no-error-summary || true
 
   test:
     runs-on: ubuntu-latest
@@ -30,8 +25,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Install dependencies
         run: pip install pytest pytest-asyncio pytest-homeassistant-custom-component
       - name: Run tests
-        run: pytest tests/ -v -p no:socket
+        run: pytest tests/ -v -p no:socket --override-ini="asyncio_mode=auto"
