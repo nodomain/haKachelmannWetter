@@ -1,4 +1,5 @@
 """Weather platform for KachelmannWetter integration."""
+
 from __future__ import annotations
 
 from homeassistant.components.weather import (
@@ -11,14 +12,23 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import API_BASE, DOMAIN
 
 # Standard HA Forecast keys — used to strip internal _prefixed keys
 _FORECAST_KEYS = {
-    "datetime", "condition", "cloud_coverage", "humidity",
-    "native_dew_point", "native_precipitation", "native_pressure",
-    "native_temperature", "native_templow", "native_wind_gust_speed",
-    "native_wind_speed", "wind_bearing", "precipitation_probability",
+    "datetime",
+    "condition",
+    "cloud_coverage",
+    "humidity",
+    "native_dew_point",
+    "native_precipitation",
+    "native_pressure",
+    "native_temperature",
+    "native_templow",
+    "native_wind_gust_speed",
+    "native_wind_speed",
+    "wind_bearing",
+    "precipitation_probability",
 }
 
 
@@ -39,9 +49,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up the KachelmannWetter weather entity."""
     data = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        [KachelmannWeather(data["coordinator"], data["device_info"], entry)]
-    )
+    async_add_entities([KachelmannWeather(data["coordinator"], data["device_info"], entry)])
 
 
 class KachelmannWeather(CoordinatorEntity, WeatherEntity):
@@ -68,9 +76,7 @@ class KachelmannWeather(CoordinatorEntity, WeatherEntity):
         """Handle updated data from the coordinator."""
         super()._handle_coordinator_update()
         # Notify forecast subscribers that new data is available
-        self.hass.async_create_task(
-            self.async_update_listeners(("daily", "hourly"))
-        )
+        self.hass.async_create_task(self.async_update_listeners(("daily", "hourly")))
 
     def _current(self) -> dict:
         """Return current weather data dict."""
@@ -120,6 +126,14 @@ class KachelmannWeather(CoordinatorEntity, WeatherEntity):
     def wind_bearing(self) -> float | None:
         """Return the current wind bearing."""
         return self._current().get("wind_bearing")
+
+    @property
+    def entity_picture(self) -> str | None:
+        """Return Kachelmann weather symbol as entity picture."""
+        symbol = self._current().get("weather_symbol")
+        if symbol:
+            return f"{API_BASE}/tools/weatherSymbol/{symbol}.svg"
+        return None
 
     async def async_forecast_daily(self) -> list[Forecast] | None:
         """Return daily forecast with only standard HA keys."""

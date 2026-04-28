@@ -3,7 +3,7 @@
   "name": "KachelmannWetter",
   "integration_type": "service",
   "config_flow": true,
-  "version": "2.1.0",
+  "version": "2.3.0",
   "documentation": "https://github.com/nodomain/haKachelmannWetter",
   "issue_tracker": "https://github.com/nodomain/haKachelmannWetter/issues",
   "requirements": [],
