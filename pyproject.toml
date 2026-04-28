@@ -1,0 +1,18 @@
+[project]
+name = "haKachelmannWetter"
+version = "2.1.0"
+description = "Custom Home Assistant integration for KachelmannWetter API"
+license = {text = "MIT"}
+requires-python = ">=3.12"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "BLE"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+strict = false
