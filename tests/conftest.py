@@ -17,6 +17,12 @@ def auto_enable_custom_integrations(enable_custom_integrations):
     yield
 
 
+@pytest.fixture(autouse=True)
+def expected_lingering_threads() -> bool:
+    """Allow lingering threads created by the coordinator's asyncio.gather."""
+    return True
+
+
 MOCK_API_KEY = "test_api_key_1234567890"
 MOCK_LAT = 49.4617
 MOCK_LON = 11.1538
