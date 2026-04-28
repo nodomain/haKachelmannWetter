@@ -206,7 +206,9 @@ def normalize_daily_from_6h(data: dict[str, Any]) -> list[dict[str, Any]]:
             }
 
         d = daily_data[date_key]
-        symbol = _map_condition(entry.get("weatherSymbol"), entry.get("isDay", True))
+        # Always map as daytime for daily forecast — avoids clear-night (moon)
+        # leaking into multi-day views when night slots are included
+        symbol = _map_condition(entry.get("weatherSymbol"), is_day=True)
         if symbol:
             d["condition"].add(symbol)
         d["cloud_coverage"].append(entry.get("cloudCoverage"))
