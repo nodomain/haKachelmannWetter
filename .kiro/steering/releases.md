@@ -71,11 +71,13 @@ Note: `pyproject.toml` version is NOT authoritative — `manifest.json` is the s
 
 ## GitHub Release
 
-The git tag `vX.Y.Z` is what HACS uses to detect new versions. No GitHub Release object needed — the tag is sufficient. If you want a GitHub Release for visibility:
+The git tag `vX.Y.Z` is what HACS uses to detect new versions. Always create a GitHub Release too for visibility and user notifications:
 
 ```bash
-gh release create vX.Y.Z --title "vX.Y.Z" --notes "See CHANGELOG.md"
+gh release create vX.Y.Z --title "vX.Y.Z" --notes "<changelog entry in markdown>"
 ```
+
+Use the changelog entry content (### Fixed / ### Added etc.) as release notes.
 
 ## Branch Protection
 
