@@ -1,0 +1,3076 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Meteologix AG / Kachelmannwetter - API",
+        "description": "\n## Usage / Requirements\n\nTo use this API, you need to have an active subscription for one of the following services:\n\n* [kachelmannwetter.com](https://kachelmannwetter.com) - \"**Plus**-Abonnement\" (monatlich / j\u00e4hrlich) - nichtkommerzielle Nutzung\n* [meteologix.com](https://meteologix.com) - \"AD FREE **PLUS**\" (monthly / yearly) - non-commercial use\n* [weather.us](https://weather.us) - \"AD FREE **PLUS**\" (monthly / yearly) - non-commercial use\n* [Weather API](https://accounts.meteologix.com/products) - Business Starter - commercial use allowed\n\n\n### Locations\n\nOur Hobby / Smart-Home plans for private usage are limited to two locations.  \nBefore starting to use the API, you'll have to set at least one location within your Plus- or API-subscription.\n\nTo set up a location, open the [subscription list within our account portal](https://accounts.meteologix.com/subscriptions) and find the \n\"manage API locations\" / \"API-Standorte verwalten\" button in the subscription box and set a location within the map.\n\n### Authenticate\n\nTo be able to execute requests, you have to authenticate yourself with an API-Token.  \nTo acquire an API-Token, open the [subscription list within our account portal](https://accounts.meteologix.com/subscriptions) \nand go to \"Manage API Keys\" / \"API-Keys verwalten\" within your API- or Plus-subscription.\n\n## Parameter Packages\n\nThis is an overview of the parameters provided within the different endpoints.  \nFore more details check the \"Response Data\"-sections of each individual endpoint on the left.\n\n| Standard                              | Advanced |\n| ------------------------------------- | -------- |\n| Mean sea level pressure `hPa`         | Min. Temperature 2m, 6h `\u00b0C / \u00b0F` |\n| Temperature, 2 meter `\u00b0C / \u00b0F`        | Max. Temperature 2m, 6h `\u00b0C / \u00b0F` |\n| Relative humidity `%`                | Min. Temperature 2m, 12h `\u00b0C / \u00b0F` |\n| Dewpoint `\u00b0C / \u00b0F`                    | Max. Temperature 2m, 12h `\u00b0C / \u00b0F` |\n| Wind speed and direction `m/s / mph`  | Significant weather `wmoCode` |\n| Wind gust speed 1h `m/s / mph`        | Cloud coverage low `%` |\n| Wind gust speed 3h `m/s / mph`        | Cloud coverage medium `%` |\n| Cloud coverage `%`                   | Cloud coverage high `%` |\n| Precipitation 1h `mm / inch`          | Precipitation 6h sum `mm / inch` |\n| Precipitation 3h `mm / inch`          | Precipitation 12h sum `mm / inch` |\n| Precipitation 6h `mm / inch`          | Precipitation 24h sum `mm / inch` |\n| Snow height `m / inch`                | Precipitation `snow` 6h `mm / inch` |\n| Sunshine duration of 1h `min`         | Precipitation `snow` 12h `mm / inch` |\n|                                       | Precipitation `snow` 24h `mm / inch` |\n|                                       | Global radiation `Wh/m\u00b2` |\n|                                       | Weather symbol information |\n\n## Unit conversions \n\n### Speed\n\n| source unit     | target unit  | formula                   |\n|-----------------|--------------|---------------------------|\n| m/s             | km/h         | `km/h = m/s x 3.6`        |\n| m/s             | kn           | `kn   = m/s x 1.94384`    |\n| m/s             | mph          | `mph  = m/s x 2.23694`    |\n| kn              | m/s          | `m/s  = kn x 0.514444444` |\n| kn              | km/h         | `km/h = kn x 1.852`       |\n| kn              | mph          | `mph  = kn x 1.15078`     |\n\n\n### Lengths\n\n| source unit     | target unit  | formula                   |\n|-----------------|--------------|---------------------------|\n| mm              | inch         | `in = mm x 0.0393701`     |\n| m               | feet         | `ft = m x 3.281`          |    \n\n\n### Temperatures\n\n| source unit     | target unit  | formula                        |\n|-----------------|--------------|--------------------------------|\n| \u00b0C              | K            | `K  = \u00b0C - 273.15`             |\n| \u00b0C              | \u00b0F           | `\u00b0F = \u00b0C x 1.8 + 32`           |\n| K               | \u00b0C           | `\u00b0C = K + 273.15`              |\n| K               | \u00b0F           | `\u00b0F = (K + 273.15) x 1.8 + 32` |\n\n\n## Terms of Service / Privacy Policy\n\nHere you'll find [our terms of service](https://accounts.meteologix.com/static/api-nutzungsbedingungen) and [privacy policy](https://accounts.meteologix.com/static/api-datenschutzerklaerung) \n\n## Rate-Limit\n\nDepending on your subscription you'll have a burst rate limit within one minute:\n\n| Subscription     | Limit                 |\n| ---------------- | ----------------------|\n| Hobby            | 120 requests / minute |\n| Business Starter | 250 requests / minute |\n\nAdditionally a daily request limit is applied to the hobby plan, so the monthly request limit will be ensured.  \nThis daily limit has the advantage that, in a case of too many requests, you do not have to wait for many days until you get unblocked.\n\n| Subscription | Limit |\n| ------------ | ------|\n| Hobby        | 700 requests / day |\n\n\nWithin the response headers you'll find information about your rate limit.  \nAfter you hit the rate limit, check the `x-ratelimit-retry-after` header to see, when you're allowed to request again.\n\n```\nx-ratelimit-limit: 700 \nx-ratelimit-remaining: 623  \nx-ratelimit-retry-after: 2023-05-19T20:51:44+00:00\n```\n",
+        "version": "v2.0 - 34503c2"
+    },
+    "servers": [
+        {
+            "url": "https://api.kachelmannwetter.com/v02"
+        }
+    ],
+    "paths": {
+        "/station/{stationId}/observations/latest": {
+            "get": {
+                "tags": [
+                    "Stations"
+                ],
+                "summary": "Station - The Latest observations",
+                "description": "The latest observed parameters for the requested station are available here.\n\nThis also reflects the current situation of the weather at the station's location, since not all parameters are measured within the\nsmallest resolution possible.\n\ne.g. hourly wind gusts are not reported every 10 minutes at with this endpoint you get the latest report of hourly wind gusts together\nwith the dateTime this measurement was reported.\n\n## Parameters and their units\n\nAll [possible parameters and units can be seen at the station timeseries response](\\#/operations/get_station_observations#response-body).",
+                "operationId": "get_station_observations_latest",
+                "parameters": [
+                    {
+                        "name": "stationId",
+                        "in": "path",
+                        "description": "the station id to get the measurements",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "106350"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StationObservationLatestResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/current/{lat}/{lon}": {
+            "get": {
+                "tags": [
+                    "Current Weather"
+                ],
+                "summary": "Current Weather",
+                "description": "This gives you the best available information about the current weather at the given location.\n\nWe use 3 main sources to provide you with information about the current conditions at the given locations. Which values and sources\nare used depend on the availability at the location.\nThe main sources are:\n- Observations from weather stations\n  - high precision\n  - worldwide but only available near weather stations\n  - sometimes not all values are available from a station (e.g. not all stations have wind sensors)\n- Analysis\n  - medium precision\n  - currently available for Germany, Austria, Switzerland and surrounding areas only\n  - see the following link for the covered area:\\\n    https://kachelmannwetter.com/de/analyse/superhd/super-hd/temperatur.html\n- Forecasts\n  - low to medium precision, depending on the available forecast model at this location\n  - available worldwide\n\n## Parameters and their units\n\nAll [possible parameters and units can be seen at the forecast response](\\#/operations/get_forecast_standard#response-body) documentation regardless of their source.",
+                "operationId": "get_current_weather",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/latitude"
+                    },
+                    {
+                        "$ref": "#/components/parameters/longitude"
+                    },
+                    {
+                        "$ref": "#/components/parameters/units"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CurrentWeatherResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    }
+                }
+            }
+        },
+        "/forecast/{lat}/{lon}/3day": {
+            "get": {
+                "tags": [
+                    "Forecasts"
+                ],
+                "summary": "3-Day Forecast",
+                "description": "Within our 3-Day Forecast you'll get daily summaries about the main weather conditions for the given geolocation.\n\nDepending on the time of the request, you will get a 3-day forecast including today or later in the day you'll get a 3-day forecast starting from tomorrow.\nYou may use the `dayName` property to easily translate this for display purposes.\n\nAdditional to the daily summary, there are summaries for night (0-6), morning (6-12), afternoon (12-18) and evening (18-24)\nwithin the `timeOfDay` parameter.",
+                "operationId": "get_forecast_3days",
+                "parameters": [
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "Accept header",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "application/vnd.kmw.v2+json",
+                                "application/json"
+                            ]
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/latitude"
+                    },
+                    {
+                        "$ref": "#/components/parameters/longitude"
+                    },
+                    {
+                        "$ref": "#/components/parameters/ForecastModel"
+                    },
+                    {
+                        "$ref": "#/components/parameters/units"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DailyWeatherResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    }
+                }
+            }
+        },
+        "/forecast/{lat}/{lon}/trend14days": {
+            "get": {
+                "tags": [
+                    "Forecasts"
+                ],
+                "summary": "14-Day Trend",
+                "description": "With our 14-Day Trend you'll get a quick overview of how the weather may be within the next two weeks.\n\nFor this trend forecast we analyse data of multiple forecast models and give the best guess prognosis on a daily basis.",
+                "operationId": "get_forecast_trend14days",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/latitude"
+                    },
+                    {
+                        "$ref": "#/components/parameters/longitude"
+                    },
+                    {
+                        "$ref": "#/components/parameters/units"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Trend14DaysResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    }
+                }
+            }
+        },
+        "/forecast/{lat}/{lon}/standard/{timeSteps}": {
+            "get": {
+                "tags": [
+                    "Forecasts"
+                ],
+                "summary": "Standard Parameters",
+                "description": "Our standard parameter package contains the most default parameters to get a quick overview of the upcoming weather conditions.\n\nDepending on the `timeSteps` value you get a different amount of forecast hours\n\n| timeSteps   | amount of forecast hours |\n| ---------- | ------------------------- |\n| 1h         | up to 24 hours            |\n| 3h         | up to 120 hours           |\n| 6h         | up to 240 hours           |\n\nFind a list of the [parameters within the data array/object of the response-body](#response-body)",
+                "operationId": "get_forecast_standard",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/latitude"
+                    },
+                    {
+                        "$ref": "#/components/parameters/longitude"
+                    },
+                    {
+                        "$ref": "#/components/parameters/units"
+                    },
+                    {
+                        "name": "timeSteps",
+                        "in": "path",
+                        "description": "the time steps, e.g. 3h for a forecast values every 3 hours (8 values per day)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "(6h|3h|1h)"
+                        },
+                        "examples": {
+                            "6h": {
+                                "summary": "6h",
+                                "value": "6h"
+                            },
+                            "3h": {
+                                "summary": "3h",
+                                "value": "3h"
+                            },
+                            "1h": {
+                                "summary": "1h",
+                                "value": "1h"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StandardResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    }
+                }
+            }
+        },
+        "/forecast/{lat}/{lon}/advanced/{timeSteps}": {
+            "get": {
+                "tags": [
+                    "Forecasts"
+                ],
+                "summary": "Advanced Parameters",
+                "description": "Our advanced parameter package contains some more detailed parameters of the upcoming weather conditions.\n\nDepending on the `timeSteps` value you get a different amount of forecast hours\n\n| timeSteps   | amount of forecast hours |\n| ---------- | ------------------------- |\n| 1h         | up to 24 hours            |\n| 3h         | up to 120 hours           |\n| 6h         | up to 240 hours           |\n\nFind a list of the [parameters within the data array/object of the response-body](#response-body)",
+                "operationId": "get_forecast_advanced",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/latitude"
+                    },
+                    {
+                        "$ref": "#/components/parameters/longitude"
+                    },
+                    {
+                        "$ref": "#/components/parameters/units"
+                    },
+                    {
+                        "name": "timeSteps",
+                        "in": "path",
+                        "description": "the time steps, e.g. 3h for a forecast values every 3 hours (8 values per day)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "(6h|3h|1h)"
+                        },
+                        "examples": {
+                            "6h": {
+                                "summary": "6h",
+                                "value": "6h"
+                            },
+                            "3h": {
+                                "summary": "3h",
+                                "value": "3h"
+                            },
+                            "1h": {
+                                "summary": "1h",
+                                "value": "1h"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AdvancedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    }
+                }
+            }
+        },
+        "/station/search/{lat}/{lon}": {
+            "get": {
+                "tags": [
+                    "Stations"
+                ],
+                "summary": "Station - Search for stations",
+                "description": "Depending on your subscription you may have access to one, two or unlimited locations for station observations.\n\nHere you may search for stations at a given location.\nFinding a station within this endpoint does not automatically mea that you are allowed to get all data from this station.",
+                "operationId": "get_station_search",
+                "parameters": [
+                    {
+                        "name": "lat",
+                        "in": "path",
+                        "description": "latitude of the center point",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "pattern": "-?(\\d*\\.)?\\d+"
+                        },
+                        "example": 50.3651
+                    },
+                    {
+                        "name": "lon",
+                        "in": "path",
+                        "description": "longitude of the center point",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "pattern": "-?(\\d*\\.)?\\d+"
+                        },
+                        "example": 8.7271
+                    },
+                    {
+                        "name": "radius",
+                        "in": "query",
+                        "description": "the radius to search for stations in km",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 10
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/StationInformation"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    }
+                }
+            }
+        },
+        "/station/{stationId}/observations/{timeSteps}": {
+            "get": {
+                "tags": [
+                    "Stations"
+                ],
+                "summary": "Station - Observations as time series",
+                "description": "This a good source to display charts of measurements or simple summaries of measured weather station values.\n\nThese e.g. daily or hourly aggregations (timeStep) *do not comply with climatological standards* but as an advantage\nalso provide values if only some measurements within the given resolutions time interval are present.\n\nDaily aggregations take care of the local timezone and aggregate from midnight local time to midnight local time.\n\nDepending on the `timeStep` value you get a different amount of historical data.\n\n| timeStep   | amount of history |\n| ---------- | ----------------- |\n| 1d         | 7 days            |\n| 1h         | 24 hours          |\n| 10min      | 6 hours           |",
+                "operationId": "get_station_observations",
+                "parameters": [
+                    {
+                        "name": "stationId",
+                        "in": "path",
+                        "description": "the station id to get the measurements",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "106350"
+                    },
+                    {
+                        "name": "timeSteps",
+                        "in": "path",
+                        "description": "the maximum resolution of observation data",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "(1d|1h|10min)"
+                        },
+                        "examples": {
+                            "1d": {
+                                "summary": "1d",
+                                "value": "1d"
+                            },
+                            "1h": {
+                                "summary": "1h",
+                                "value": "1h"
+                            },
+                            "10min": {
+                                "summary": "10min",
+                                "value": "10min"
+                            }
+                        }
+                    },
+                    {
+                        "name": "threshold",
+                        "in": "query",
+                        "description": "threshold values to analyze",
+                        "style": "deepObject",
+                        "explode": true,
+                        "schema": {
+                            "minProperties": 1,
+                            "type": "object"
+                        },
+                        "example": "{\"temp\": 0.1}"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/StationObservationAggregateResponse"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/StationObservationResponse"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AccessDenied"
+                    }
+                }
+            }
+        },
+        "/tools/astronomy/{lat}/{lon}": {
+            "get": {
+                "tags": [
+                    "Tools"
+                ],
+                "summary": "Astronomical Information",
+                "description": "Get some astronomical data for the next 14 days. This includes moon and sun information.\n\nFind a list of the [parameters within the data array/object of the response-body](#response-body)",
+                "operationId": "get_tools_astronomy",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/latitude"
+                    },
+                    {
+                        "$ref": "#/components/parameters/longitude"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AstronomyResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    }
+                }
+            }
+        },
+        "/tools/weatherSymbol/{weatherSymbol}.{format}": {
+            "get": {
+                "tags": [
+                    "Tools"
+                ],
+                "summary": "Weather Symbol",
+                "description": "Get a svg image that represents the weather symbols used within our forecast or analysis for display purposes\n\nCurrent possible symbols (also with `_night` suffix) are:\n\n`cloudy`, `fog`, `freezingrain`, `overcast`, `partlycloudy`, `rain`, `raindrizzle`, `rainheavy`, `severethunderstorm`, `showers`, `showersheavy`, `snow`, `snowheavy`, `snowrain`, `snowrainshowers`, `snowshowers`, `snowshowersheavy`, `sunshine`, `thunderstorm`, `wind`",
+                "operationId": "get_tools_weather_symbol",
+                "parameters": [
+                    {
+                        "name": "weatherSymbol",
+                        "in": "path",
+                        "description": "use the values of `weatherSymbol` from our forecast responses to get an appropriate image",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[A-Za-z_\\-0-9]+"
+                        },
+                        "examples": {
+                            "sunshine": {
+                                "summary": "sunshine",
+                                "value": "sunshine"
+                            },
+                            "sunshine (night)": {
+                                "summary": "sunshine (night)",
+                                "value": "sunshine_night"
+                            },
+                            "rain": {
+                                "summary": "rain",
+                                "value": "rain"
+                            },
+                            "rain (night)": {
+                                "summary": "rain (night)",
+                                "value": "rain_night"
+                            },
+                            "thunderstorm": {
+                                "summary": "thunderstorm",
+                                "value": "thunderstorm"
+                            },
+                            "thunderstorm (night)": {
+                                "summary": "thunderstorm (night)",
+                                "value": "thunderstorm_night"
+                            }
+                        }
+                    },
+                    {
+                        "name": "format",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[A-Za-z]+"
+                        },
+                        "examples": {
+                            "svg": {
+                                "summary": "svg",
+                                "value": "svg"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "image/svg+xml": {}
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Unit": {
+                "description": "a measurement unit",
+                "type": "string",
+                "enum": [
+                    "celsius",
+                    "fahrenheit",
+                    "mm",
+                    "cm",
+                    "m",
+                    "km",
+                    "in",
+                    "ft",
+                    "yd",
+                    "mi",
+                    "knots",
+                    "kph",
+                    "mps",
+                    "bft"
+                ],
+                "example": "celsius",
+                "nullable": true
+            },
+            "globalRadiation": {
+                "description": "global radiation in Wh/m\u00b2 for the preceding timespan",
+                "type": "number",
+                "example": 220.5,
+                "nullable": true
+            },
+            "weatherSymbol": {
+                "description": "a symbol representing the weather situation, see the [Tools / Weather Symbol](\\#/operations/get_tools_weather_symbol) endpoint to get the correct weather symbol",
+                "type": "string",
+                "example": "sunshine",
+                "nullable": true
+            },
+            "modelResolution": {
+                "description": "the weather models resolution  \n\n| Value    | Resolution |\n| -------- | --------- |\n| STANDARD | >= ~10km |\n| HIGH      | >=  ~4km | \n| SUPER_HIGH | <  ~4km |\n",
+                "type": "string",
+                "enum": [
+                    "STANDARD",
+                    "HIGH",
+                    "SUPER_HIGH"
+                ],
+                "example": "SUPER_HIGH"
+            },
+            "Error": {
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "An error occurred"
+                    },
+                    "status": {
+                        "description": "may be any HTTP status code",
+                        "type": "integer",
+                        "example": 400
+                    },
+                    "detail": {
+                        "type": "string",
+                        "example": "more detailed information"
+                    }
+                },
+                "type": "object",
+                "xml": {
+                    "name": "response"
+                }
+            },
+            "StationObservationLatestData": {
+                "required": [
+                    "dateTime",
+                    "name"
+                ],
+                "properties": {
+                    "dateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            {
+                                "type": "number",
+                                "format": "float",
+                                "nullable": true
+                            }
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "StationObservationLatestResponse": {
+                "required": [
+                    "stationId",
+                    "name"
+                ],
+                "properties": {
+                    "stationId": {
+                        "title": "the station's identifier",
+                        "type": "string",
+                        "example": "106350"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "lat": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            {
+                                "type": "number",
+                                "format": "float",
+                                "nullable": true
+                            }
+                        ]
+                    },
+                    "lon": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            {
+                                "type": "number",
+                                "format": "float",
+                                "nullable": true
+                            }
+                        ]
+                    },
+                    "ele": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StationObservationLatestData"
+                        },
+                        "default": []
+                    }
+                },
+                "type": "object"
+            },
+            "CurrentWeatherResponseData": {
+                "required": [
+                    "dateTime",
+                    "name"
+                ],
+                "properties": {
+                    "dateTime": {
+                        "title": "the date and time when this parameter occurred",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "name": {
+                        "description": "the parameter name",
+                        "type": "string",
+                        "example": "temp"
+                    },
+                    "value": {
+                        "description": "the parameter value",
+                        "example": 12.6,
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            {
+                                "type": "number",
+                                "format": "float",
+                                "nullable": true
+                            },
+                            {
+                                "type": "boolean",
+                                "nullable": true
+                            }
+                        ]
+                    },
+                    "type": {
+                        "description": "the data type of the parameter",
+                        "type": "string",
+                        "enum": [
+                            "bool",
+                            "int",
+                            "float",
+                            "string",
+                            "array",
+                            "object"
+                        ],
+                        "example": "bool",
+                        "nullable": true
+                    },
+                    "source": {
+                        "description": "the source for the data, if mixed, otherwise check the parent objects's source attribute",
+                        "type": "string",
+                        "enum": [
+                            "OBSERVATION",
+                            "ANALYSIS",
+                            "FORECAST",
+                            "MIXED"
+                        ],
+                        "example": "FORECAST",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "CurrentWeatherResponse": {
+                "required": [
+                    "lat",
+                    "lon"
+                ],
+                "properties": {
+                    "lat": {
+                        "description": "latitude used for the forecast",
+                        "type": "number",
+                        "format": "float",
+                        "example": 50.3651
+                    },
+                    "lon": {
+                        "description": "longitude used for the forecast",
+                        "type": "number",
+                        "format": "float",
+                        "example": 8.7271
+                    },
+                    "systemOfUnits": {
+                        "description": "the system of units for values within this forecast response",
+                        "type": "string",
+                        "default": "metric",
+                        "enum": [
+                            "metric",
+                            "imperial"
+                        ],
+                        "example": "metric"
+                    },
+                    "data": {
+                        "type": "object",
+                        "default": [],
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CurrentWeatherResponseData"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "WeatherRisk": {
+                "required": [
+                    "type",
+                    "weatherSymbol"
+                ],
+                "properties": {
+                    "type": {
+                        "description": "type of the weather risk",
+                        "type": "string",
+                        "enum": [
+                            "wind",
+                            "weather"
+                        ],
+                        "example": "wind"
+                    },
+                    "weatherSymbol": {
+                        "$ref": "#/components/schemas/weatherSymbol"
+                    }
+                },
+                "type": "object"
+            },
+            "DailyWeatherTimeOfDayData": {
+                "required": [
+                    "timeOfDay",
+                    "isDay",
+                    "weatherSymbol"
+                ],
+                "properties": {
+                    "timeOfDay": {
+                        "description": "time of day",
+                        "type": "string",
+                        "example": "morning"
+                    },
+                    "isDay": {
+                        "description": "if most of this day part is during daytime",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "tempMax": {
+                        "description": "the maximum temperature 2m above ground [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "tempMin": {
+                        "description": "the minimum temperature 2m above ground [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "precCurrent": {
+                        "description": "the predicted precipitation (rain, snow) for the current time period of the forecast (e.g for the morning) [metric: mm, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.6,
+                        "nullable": true
+                    },
+                    "windGust": {
+                        "description": "the most probable wind gust speed [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "windSpeed": {
+                        "description": "average wind speed (for a timespan) [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.5,
+                        "nullable": true
+                    },
+                    "windDirection": {
+                        "description": "average direction from which the wind originates in degree (0=N, 90=E, 180=S, 270=W)",
+                        "type": "number",
+                        "format": "float",
+                        "example": 84,
+                        "nullable": true
+                    },
+                    "weatherSymbol": {
+                        "$ref": "#/components/schemas/weatherSymbol"
+                    },
+                    "risks": {
+                        "description": "weather risks that may occur during this time",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WeatherRisk"
+                        },
+                        "default": []
+                    }
+                },
+                "type": "object"
+            },
+            "DailyWeatherResponseData": {
+                "required": [
+                    "dateTime",
+                    "dayName",
+                    "weatherSymbol",
+                    "timeOfDay"
+                ],
+                "properties": {
+                    "dateTime": {
+                        "description": "date for the forecast values",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2022-01-01"
+                    },
+                    "dayName": {
+                        "description": "textual representation of the day",
+                        "type": "string",
+                        "format": "date",
+                        "enum": [
+                            "today",
+                            "tomorrow",
+                            "monday",
+                            "tuesday",
+                            "wednesday",
+                            "thursday",
+                            "friday",
+                            "saturday",
+                            "sunday"
+                        ],
+                        "example": "tomorrow"
+                    },
+                    "tempMax": {
+                        "description": "the most probable maximum temperature 2m above ground [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "tempMin": {
+                        "description": "the most probable minimum temperature 2m above ground [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "precCurrent": {
+                        "description": "the predicted precipitation (rain, snow) for the current time period of the forecast (e.g for the day) [metric: mm, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.6,
+                        "nullable": true
+                    },
+                    "windGust": {
+                        "description": "the most probable wind gust speed [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "windSpeed": {
+                        "description": "average wind speed (for a timespan) [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.5,
+                        "nullable": true
+                    },
+                    "windDirection": {
+                        "description": "average direction from which the wind originates in degree (0=N, 90=E, 180=S, 270=W)",
+                        "type": "number",
+                        "format": "float",
+                        "example": 84,
+                        "nullable": true
+                    },
+                    "sunHours": {
+                        "description": "the most probable amount of hours the sun will be visible [h]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "cloudCoverage": {
+                        "description": "effective cloud coverage within the preceding timespan in % (e.g. low clouds have more priority than high clouds)",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "weatherSymbol": {
+                        "$ref": "#/components/schemas/weatherSymbol"
+                    },
+                    "risks": {
+                        "description": "weather risks that may occur during this time",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WeatherRisk"
+                        },
+                        "default": []
+                    },
+                    "timeOfDay": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DailyWeatherTimeOfDayData"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "DailyWeatherResponse": {
+                "required": [
+                    "lat",
+                    "lon",
+                    "resolution",
+                    "timeZone",
+                    "run",
+                    "data"
+                ],
+                "properties": {
+                    "lat": {
+                        "description": "latitude used for the forecast",
+                        "type": "number",
+                        "format": "float",
+                        "example": 50.3651
+                    },
+                    "lon": {
+                        "description": "longitude used for the forecast",
+                        "type": "number",
+                        "format": "float",
+                        "example": 8.7271
+                    },
+                    "alt": {
+                        "description": "altitude used for the forecast [metric: m, imperial: feet]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 120,
+                        "nullable": true
+                    },
+                    "resolution": {
+                        "$ref": "#/components/schemas/modelResolution"
+                    },
+                    "timeZone": {
+                        "description": "the timezone at this location",
+                        "type": "string",
+                        "example": "Europe/Berlin"
+                    },
+                    "systemOfUnits": {
+                        "description": "the system of units for values within this forecast response",
+                        "type": "string",
+                        "default": "metric",
+                        "enum": [
+                            "metric",
+                            "imperial"
+                        ],
+                        "example": "metric"
+                    },
+                    "run": {
+                        "description": "the run of the forecast (e.g. \"2022-01-01T12:00:00+00:00\")",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2022-01-01T12:00:00+00:00"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DailyWeatherResponseData"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Trend14DaysResponseData": {
+                "required": [
+                    "dateTime",
+                    "isWeekend",
+                    "weekday",
+                    "cloudCoverageEighths",
+                    "cloudWord",
+                    "weatherSymbol"
+                ],
+                "properties": {
+                    "dateTime": {
+                        "description": "date for the forecast values",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2022-01-01"
+                    },
+                    "isWeekend": {
+                        "description": "if the day is a day on the weekend (saturday or sunday)",
+                        "type": "boolean"
+                    },
+                    "weekday": {
+                        "description": "the weekday of this day [Mon, Tue, Wed, Thu, Fri, Sat, Sun]",
+                        "type": "string"
+                    },
+                    "tempMax": {
+                        "description": "the most probable maximum temperature 2m above ground [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "tempMaxLow": {
+                        "description": "the lowest of all maximum temperatures from the multiple forecast models used for this trend [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "tempMaxHigh": {
+                        "description": "the highest of all maximum temperatures from the multiple forecast models used for this trend [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "tempMin": {
+                        "description": "the most probable minimum temperature 2m above ground [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "tempMinLow": {
+                        "description": "the lowest of all minimum temperatures from the multiple forecast models used for this trend [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "tempMinHigh": {
+                        "description": "the highest of all minimum temperatures from the multiple forecast models used for this trend [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "prec": {
+                        "description": "the most probable amount of precipitation [metric: mm, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "precLow": {
+                        "description": "the lowest calculated precipitation amount of the multiple forecast models used for this trend [metric: mm, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "precHigh": {
+                        "description": "the highest calculated precipitation amount of the multiple forecast models used for this trend [metric: mm, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "precProb1mm": {
+                        "description": "the predicted probability of precipitation >= 1mm in %",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "precProb10mm": {
+                        "description": "the predicted probability of precipitation >= 10mm in %",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "precType": {
+                        "description": "the type of precipitation [rain = rain|snow = snow|snowrain = rain, snow or sleet]",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "precIntensity": {
+                        "description": "the intensity of precipitation [1 = normal precipitation, 2 = showers, 3 = heavy showers]",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "precWord": {
+                        "description": "a text representation of precipitation for display / icon / translation purposes",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "windGust": {
+                        "title": "t",
+                        "description": "he most probable wind gust speed [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "windGustLow": {
+                        "description": "the lowest calculated gust speed of the multiple forecast models used for this trend [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "windGustHigh": {
+                        "description": "the highest calculated gust speed of the multiple forecast models used for this trend [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "sunMaxPos": {
+                        "description": "maximum possible hours of sunshine during the day if there would be no cloud coverage [h]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "sunHours": {
+                        "description": "the most probable amount of hours the sun will be visible [h]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "sunHoursRelative": {
+                        "description": "the relative value of sunshine during the day [%]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "sunHoursLow": {
+                        "description": "the lowest calculated sunshine duration of the multiple forecast models used for this trend [h]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "sunHoursHigh": {
+                        "description": "the highest calculated sunshine duration of the multiple forecast models used for this trend [h]",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "cloudCoverageEighths": {
+                        "description": "cloud coverage in eighths e.g 1 = 1/8 = 12.5%, 4 = 4/8 = 50%",
+                        "type": "integer"
+                    },
+                    "cloudWord": {
+                        "description": "textual representation of cloudiness [clear, few, scattered, broken, overcast]",
+                        "type": "string"
+                    },
+                    "thunderStorm": {
+                        "description": "type of expected thunderstorm activity [1 = thunderstorm expected, 2 = heavy thunderstorms expected]",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "weatherSymbol": {
+                        "$ref": "#/components/schemas/weatherSymbol"
+                    }
+                },
+                "type": "object"
+            },
+            "Trend14DaysResponse": {
+                "required": [
+                    "lat",
+                    "lon",
+                    "timeZone",
+                    "run",
+                    "nextRun",
+                    "data"
+                ],
+                "properties": {
+                    "lat": {
+                        "description": "latitude used for the forecast",
+                        "type": "number",
+                        "format": "float",
+                        "example": 50.3651
+                    },
+                    "lon": {
+                        "description": "longitude used for the forecast",
+                        "type": "number",
+                        "format": "float",
+                        "example": 8.7271
+                    },
+                    "alt": {
+                        "description": "altitude used for the forecast [metric: m, imperial: feet]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 120,
+                        "nullable": true
+                    },
+                    "timeZone": {
+                        "description": "the timezone at this location",
+                        "type": "string",
+                        "example": "Europe/Berlin"
+                    },
+                    "systemOfUnits": {
+                        "description": "the system of units for values within this forecast response",
+                        "type": "string",
+                        "default": "metric",
+                        "enum": [
+                            "metric",
+                            "imperial"
+                        ],
+                        "example": "metric"
+                    },
+                    "run": {
+                        "description": "the run of the forecast (e.g. \"2022-01-01T12:00:00+00:00\")",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2022-01-01T12:00:00+00:00"
+                    },
+                    "nextRun": {
+                        "description": "the approximate time when the next forecast will be available (e.g. \"2022-01-01T15:00:00+00:00\")",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2022-01-01T15:00:00+00:00"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Trend14DaysResponseData"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "StandardResponseData": {
+                "required": [
+                    "dateTime",
+                    "isDay",
+                    "temp"
+                ],
+                "properties": {
+                    "dateTime": {
+                        "description": "date and time for the forecast values",
+                        "example": "2022-01-01T10:00:00+00:00",
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            }
+                        ]
+                    },
+                    "isDay": {
+                        "title": "if it is day or night",
+                        "type": "boolean"
+                    },
+                    "temp": {
+                        "description": "the predicted temperature at 2m height (at current timestamp) [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 20.2
+                    },
+                    "dewpoint": {
+                        "description": "the dewpoint (at current timestamp) [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12.4,
+                        "nullable": true
+                    },
+                    "pressureMsl": {
+                        "description": "barometric air pressure at mean sea level (at current timestamp)  [hPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 1013.5,
+                        "nullable": true
+                    },
+                    "humidityRelative": {
+                        "description": "relative humidity [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 56,
+                        "nullable": true
+                    },
+                    "windSpeed": {
+                        "description": "average wind speed (for a timespan) [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.5,
+                        "nullable": true
+                    },
+                    "windDirection": {
+                        "description": "average direction from which the wind originates in degree (0=N, 90=E, 180=S, 270=W)",
+                        "type": "number",
+                        "format": "float",
+                        "example": 84,
+                        "nullable": true
+                    },
+                    "windGust": {
+                        "description": "wind gust speed in m/s (for a timespan) [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 5.7,
+                        "nullable": true
+                    },
+                    "windGust3h": {
+                        "description": "maximum wind gust speed for the last 3 hours [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 5.7,
+                        "nullable": true
+                    },
+                    "cloudCoverage": {
+                        "description": "effective cloud coverage within the preceding timespan in % (e.g. low clouds have more priority than high clouds)",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "sunHours": {
+                        "description": "duration of sunshine in hours e.g. 0.5 means 30 minutes of sunshine in the preceding timespan",
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.5,
+                        "nullable": true
+                    },
+                    "precCurrent": {
+                        "description": "the predicted precipitation (rain, snow) for the current time period of the forecast (e.g within 1h or 3h) [metric: mm, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.6,
+                        "nullable": true
+                    },
+                    "prec6h": {
+                        "description": "the predicted precipitation (rain, snow) for the previous 6 hours, if available [metric: mm, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.6,
+                        "nullable": true
+                    },
+                    "snowAmount": {
+                        "description": "the amount of snow in kg/m\u00b2 [metric: mm water equivalent, imperial: inch water equivalent]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 22,
+                        "nullable": true
+                    },
+                    "snowHeight": {
+                        "description": "the height of snow [metric: m, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.04,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "StandardResponse": {
+                "required": [
+                    "lat",
+                    "lon",
+                    "resolution",
+                    "timeZone",
+                    "run",
+                    "data"
+                ],
+                "properties": {
+                    "lat": {
+                        "description": "latitude used for the forecast",
+                        "type": "number",
+                        "format": "float",
+                        "example": 50.3651
+                    },
+                    "lon": {
+                        "description": "longitude used for the forecast",
+                        "type": "number",
+                        "format": "float",
+                        "example": 8.7271
+                    },
+                    "alt": {
+                        "description": "altitude used for the forecast [metric: m, imperial: feet]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 120,
+                        "nullable": true
+                    },
+                    "resolution": {
+                        "$ref": "#/components/schemas/modelResolution"
+                    },
+                    "timeZone": {
+                        "description": "the timezone at this location",
+                        "type": "string",
+                        "example": "Europe/Berlin"
+                    },
+                    "systemOfUnits": {
+                        "description": "the system of units for values within this forecast response",
+                        "type": "string",
+                        "default": "metric",
+                        "enum": [
+                            "metric",
+                            "imperial"
+                        ],
+                        "example": "metric"
+                    },
+                    "run": {
+                        "description": "the run of the forecast (e.g. \"2022-01-01T12:00:00+00:00\")",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2022-01-01T12:00:00+00:00"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StandardResponseData"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "AdvancedResponseData": {
+                "required": [
+                    "dateTime",
+                    "isDay",
+                    "temp",
+                    "globalRadiation",
+                    "weatherSymbol"
+                ],
+                "properties": {
+                    "dateTime": {
+                        "description": "date and time for the forecast values",
+                        "example": "2022-01-01T10:00:00+00:00",
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            }
+                        ]
+                    },
+                    "isDay": {
+                        "title": "if it is day or night",
+                        "type": "boolean"
+                    },
+                    "temp": {
+                        "description": "the predicted temperature at 2m height (at current timestamp) [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 20.2
+                    },
+                    "tempMin6h": {
+                        "description": "the minimum predicted temperature at 2m height in the preceding 6 hours [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 20.2,
+                        "nullable": true
+                    },
+                    "tempMax6h": {
+                        "description": "the maximum predicted temperature at 2m height in the preceding 6 hours [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 20.2,
+                        "nullable": true
+                    },
+                    "tempMin12h": {
+                        "description": "the minimum predicted temperature at 2m height in the preceding 12 hours [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 20.2,
+                        "nullable": true
+                    },
+                    "tempMax12h": {
+                        "description": "the maximum predicted temperature at 2m height in the preceding 12 hours [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 20.2,
+                        "nullable": true
+                    },
+                    "dewpoint": {
+                        "description": "the dewpoint (at current timestamp) [metric: \u00b0C, imperial: \u00b0F]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12.4,
+                        "nullable": true
+                    },
+                    "pressureMsl": {
+                        "description": "barometric air pressure at mean sea level (at current timestamp)  [hPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 1013.5,
+                        "nullable": true
+                    },
+                    "humidityRelative": {
+                        "description": "relative humidity [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 56,
+                        "nullable": true
+                    },
+                    "windSpeed": {
+                        "description": "average wind speed (for a timespan) [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.5,
+                        "nullable": true
+                    },
+                    "windDirection": {
+                        "description": "average direction from which the wind originates in degree (0=N, 90=E, 180=S, 270=W)",
+                        "type": "number",
+                        "format": "float",
+                        "example": 84,
+                        "nullable": true
+                    },
+                    "windGust": {
+                        "description": "wind gust speed in m/s (for a timespan) [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 5.7,
+                        "nullable": true
+                    },
+                    "windGust3h": {
+                        "description": "maximum wind gust speed for the last 3 hours [metric: m/s, imperial: mph]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 5.7,
+                        "nullable": true
+                    },
+                    "cloudCoverage": {
+                        "description": "effective cloud coverage within the preceding timespan in % (e.g. low clouds have more priority than high clouds)",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "cloudCoverageLow": {
+                        "description": "low cloud coverage within the preceding timespan in % ",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "cloudCoverageMedium": {
+                        "description": "medium height cloud coverage within the preceding timespan in % ",
+                        "type": "number",
+                        "format": "float",
+                        "example": 15,
+                        "nullable": true
+                    },
+                    "cloudCoverageHigh": {
+                        "description": "high cloud coverage within the preceding timespan in % ",
+                        "type": "number",
+                        "format": "float",
+                        "example": 18,
+                        "nullable": true
+                    },
+                    "sunHours": {
+                        "description": "duration of sunshine in hours e.g. 0.5 means 30 minutes of sunshine in the preceding timespan",
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.5,
+                        "nullable": true
+                    },
+                    "globalRadiation": {
+                        "$ref": "#/components/schemas/globalRadiation"
+                    },
+                    "precCurrent": {
+                        "description": "the predicted precipitation (rain, snow) for the current time period of the forecast (e.g within 1h or 3h) [metric: mm, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.6,
+                        "nullable": true
+                    },
+                    "prec6h": {
+                        "description": "the predicted precipitation (rain, snow) for the previous 6 hours, if available [metric: mm, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.6,
+                        "nullable": true
+                    },
+                    "prec12h": {
+                        "description": "the predicted precipitation (rain, snow) for the previous 12 hours, if available [metric: mm, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.6,
+                        "nullable": true
+                    },
+                    "prec24h": {
+                        "description": "the predicted precipitation (rain, snow) for the previous 24 hours, if available [metric: mm, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.6,
+                        "nullable": true
+                    },
+                    "precTotal": {
+                        "description": "the predicted precipitation (rain, snow) sum since the beginning of the model run [metric: mm, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 8.2,
+                        "nullable": true
+                    },
+                    "snowAmount": {
+                        "description": "the amount of snow in kg/m\u00b2 [metric: mm water equivalent, imperial: inch water equivalent]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 22,
+                        "nullable": true
+                    },
+                    "snowAmount6h": {
+                        "description": "the amount of snow in kg/m\u00b2 within 6 hours [metric: mm water equivalent, imperial: inch water equivalent]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 22,
+                        "nullable": true
+                    },
+                    "snowAmount12h": {
+                        "description": "the amount of snow in kg/m\u00b2 within 12 hours [metric: mm water equivalent, imperial: inch water equivalent]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 22,
+                        "nullable": true
+                    },
+                    "snowAmount24h": {
+                        "description": "the amount of snow in kg/m\u00b2 within 24 hours [metric: mm water equivalent, imperial: inch water equivalent]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 22,
+                        "nullable": true
+                    },
+                    "snowHeight": {
+                        "description": "the height of snow [metric: m, imperial: inch]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.04,
+                        "nullable": true
+                    },
+                    "wmoCode": {
+                        "description": "wmo code according to WMO code table 4677 - see https://www.nodc.noaa.gov/gtspp/document/codetbls/wmocodes/table4677.html",
+                        "type": "integer",
+                        "example": 61,
+                        "nullable": true
+                    },
+                    "weatherSymbol": {
+                        "$ref": "#/components/schemas/weatherSymbol"
+                    }
+                },
+                "type": "object"
+            },
+            "AdvancedResponse": {
+                "required": [
+                    "lat",
+                    "lon",
+                    "resolution",
+                    "timeZone",
+                    "run",
+                    "data"
+                ],
+                "properties": {
+                    "lat": {
+                        "description": "latitude used for the forecast",
+                        "type": "number",
+                        "format": "float",
+                        "example": 50.3651
+                    },
+                    "lon": {
+                        "description": "longitude used for the forecast",
+                        "type": "number",
+                        "format": "float",
+                        "example": 8.7271
+                    },
+                    "alt": {
+                        "description": "altitude used for the forecast [metric: m, imperial: feet]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 120,
+                        "nullable": true
+                    },
+                    "resolution": {
+                        "$ref": "#/components/schemas/modelResolution"
+                    },
+                    "timeZone": {
+                        "description": "the timezone at this location",
+                        "type": "string",
+                        "example": "Europe/Berlin"
+                    },
+                    "systemOfUnits": {
+                        "description": "the system of units for values within this forecast response",
+                        "type": "string",
+                        "default": "metric",
+                        "enum": [
+                            "metric",
+                            "imperial"
+                        ],
+                        "example": "metric"
+                    },
+                    "run": {
+                        "description": "the run of the forecast (e.g. \"2022-01-01T12:00:00+00:00\")",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2022-01-01T12:00:00+00:00"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdvancedResponseData"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "StationInformation": {
+                "required": [
+                    "id",
+                    "name",
+                    "lat",
+                    "lon",
+                    "alt",
+                    "precision",
+                    "type"
+                ],
+                "properties": {
+                    "id": {
+                        "title": "Station ID. This ID may be used for other requests regarding this station. e.g. to get a timeseries of station data.",
+                        "type": "string",
+                        "example": "106350"
+                    },
+                    "name": {
+                        "title": "the stations name",
+                        "type": "string",
+                        "example": "Feldberg/Taunus"
+                    },
+                    "lat": {
+                        "title": "latitude of the station's position",
+                        "type": "number",
+                        "format": "float",
+                        "example": 50.221
+                    },
+                    "lon": {
+                        "title": "longitude of the station's position",
+                        "type": "number",
+                        "format": "float",
+                        "example": 8.4469
+                    },
+                    "alt": {
+                        "title": "altitude of the station",
+                        "type": "integer",
+                        "example": 822
+                    },
+                    "precision": {
+                        "title": "how precise the measurements of this station are. Some amateur stations may be less precise.",
+                        "type": "string",
+                        "example": "high"
+                    },
+                    "type": {
+                        "title": "gives information to which station network this station belongs to / Vereinigte Hagel (VH)",
+                        "type": "string",
+                        "example": "WMO"
+                    },
+                    "recentlyActive": {
+                        "title": "did this station send measurements recently",
+                        "type": "boolean",
+                        "example": true,
+                        "nullable": true
+                    },
+                    "distance": {
+                        "title": "distance to the location in km",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12.6,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Threshold": {
+                "required": [
+                    "name",
+                    "countAbove",
+                    "count",
+                    "thresholdValue"
+                ],
+                "properties": {
+                    "name": {
+                        "description": "the name of the analyzed field",
+                        "type": "string"
+                    },
+                    "countAbove": {
+                        "description": "number of values that are above the thresholdValue",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "count": {
+                        "description": "count of all values that have been measured",
+                        "type": "integer"
+                    },
+                    "thresholdValue": {
+                        "description": "the thresholdValue that has been used for the analysis",
+                        "type": "number",
+                        "format": "float"
+                    }
+                },
+                "type": "object"
+            },
+            "StationObservationAggregateData": {
+                "required": [
+                    "dateTime"
+                ],
+                "properties": {
+                    "dateTime": {
+                        "description": "the date and time of the observation (ISO 8601)",
+                        "example": "2022-01-01T10:00:00+00:00",
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "temp": {
+                        "description": "latest measured temperature at the time / in this timespan [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 16.3,
+                        "nullable": true
+                    },
+                    "tempMean": {
+                        "description": "mean temperature within the timespan [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 16.3,
+                        "nullable": true
+                    },
+                    "tempMin": {
+                        "description": "minimum temperature within the timespan [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "tempMax": {
+                        "description": "maximum temperature within the timespan [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 18.5,
+                        "nullable": true
+                    },
+                    "dewpointMean": {
+                        "description": "mean dewpoint within the timespan [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 8.3,
+                        "nullable": true
+                    },
+                    "precSum": {
+                        "description": "the sum of precipitation within the timespan [mm]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "precSumBest": {
+                        "description": "the best value for precipitation (this may be a corrected value depending on radar data) [mm]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12.2,
+                        "nullable": true
+                    },
+                    "precSumModified": {
+                        "description": "this flag determines if the sum of precipitation in the given timespan has been automatically corrected (depending on radar data) [bool]",
+                        "type": "boolean",
+                        "example": true,
+                        "nullable": true
+                    },
+                    "prec24h": {
+                        "description": "the sum of precipitation within the previous 24h timespan [mm]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "snowHeightMean": {
+                        "description": "mean height of measured snow [cm]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4,
+                        "nullable": true
+                    },
+                    "snowHeightMin": {
+                        "description": "minimum height of measured snow [cm]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4,
+                        "nullable": true
+                    },
+                    "snowHeightMax": {
+                        "description": "maximum height of measured snow [cm]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4,
+                        "nullable": true
+                    },
+                    "wetBulbTempMean": {
+                        "description": "mean wet bulb temperature [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4,
+                        "nullable": true
+                    },
+                    "wetBulbTempMin": {
+                        "description": "minimum wet bulb temperature [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4,
+                        "nullable": true
+                    },
+                    "wetBulbTempMax": {
+                        "description": "maximum wet bulb temperature [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4,
+                        "nullable": true
+                    },
+                    "temp5cmMin": {
+                        "description": "the minimum temperature 5cm above ground [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 9.3,
+                        "nullable": true
+                    },
+                    "windSpeedMean": {
+                        "description": "average wind speed [kn]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.5,
+                        "nullable": true
+                    },
+                    "windSpeedMax": {
+                        "description": "maximum wind speed [kn]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.5,
+                        "nullable": true
+                    },
+                    "windGustMax": {
+                        "description": "the maximum wind gust that was observed within the timespan [kn]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 9.3,
+                        "nullable": true
+                    },
+                    "windDirectionMean": {
+                        "description": "average direction from which the wind originates in degree (0=N, 90=E, 180=S, 270=W) [\u00b0]",
+                        "type": "integer",
+                        "example": 90,
+                        "nullable": true
+                    },
+                    "pressureMean": {
+                        "description": "average air pressure at station level (QFE) [hPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 1000.4,
+                        "nullable": true
+                    },
+                    "pressureMslMean": {
+                        "description": "average air pressure at MSL / temperature adjusted (QFF) [hPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 1013.2,
+                        "nullable": true
+                    },
+                    "humidityRelativeMean": {
+                        "description": "average relative humidity [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 55,
+                        "nullable": true
+                    },
+                    "globalRadiationSum": {
+                        "description": "sum of global radiation [kJ/m\u00b2]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 14000,
+                        "nullable": true
+                    },
+                    "leafWetMean": {
+                        "description": "average leaf wetness [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 60,
+                        "nullable": true
+                    },
+                    "soilTemp10Mean": {
+                        "description": "soil temperature 10cm below surface [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 3.5,
+                        "nullable": true
+                    },
+                    "soilTemp20Mean": {
+                        "description": "soil temperature 20cm below surface [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4,
+                        "nullable": true
+                    },
+                    "soilTemp80Mean": {
+                        "description": "soil temperature 80cm below surface [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4.5,
+                        "nullable": true
+                    },
+                    "soilTemp120Mean": {
+                        "description": "soil temperature 120cm below surface [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4.8,
+                        "nullable": true
+                    },
+                    "soilHumidity10Mean": {
+                        "description": "soil humidity 10cm below surface [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 20,
+                        "nullable": true
+                    },
+                    "soilHumidity20Mean": {
+                        "description": "soil humidity 20cm below surface [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 20,
+                        "nullable": true
+                    },
+                    "soilHumidity30Mean": {
+                        "description": "soil humidity 30cm below surface [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 23,
+                        "nullable": true
+                    },
+                    "soilHumidity60Mean": {
+                        "description": "soil humidity 60cm below surface [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 23,
+                        "nullable": true
+                    },
+                    "soilHumidity80Mean": {
+                        "description": "soil humidity 80cm below surface [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 23,
+                        "nullable": true
+                    },
+                    "soilHumidity120Mean": {
+                        "description": "soil humidity 120cm below surface [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 26,
+                        "nullable": true
+                    },
+                    "soilWaterPot10Mean": {
+                        "description": "soil water potential / tension - 10cm below surface in [kPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 26,
+                        "nullable": true
+                    },
+                    "soilWaterPot30Mean": {
+                        "description": "soil water potential / tension - 30cm below surface in [kPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 26,
+                        "nullable": true
+                    },
+                    "soilWaterPot60Mean": {
+                        "description": "soil water potential / tension - 60cm below surface in [kPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 26,
+                        "nullable": true
+                    },
+                    "thresholds": {
+                        "description": "thresholds",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Threshold"
+                        },
+                        "nullable": true
+                    },
+                    "qualityFlagsRaw": {
+                        "description": "raw quality flags string to determine the aggregated data quality",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "StationObservationAggregateResponse": {
+                "title": "Response Object for aggregated observations",
+                "required": [
+                    "stationId",
+                    "name"
+                ],
+                "properties": {
+                    "stationId": {
+                        "title": "the station's identifier",
+                        "type": "string",
+                        "example": "106350"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "lat": {
+                        "example": 50.1,
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            {
+                                "type": "number",
+                                "format": "float",
+                                "nullable": true
+                            }
+                        ]
+                    },
+                    "lon": {
+                        "example": 8.3,
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            {
+                                "type": "number",
+                                "format": "float",
+                                "nullable": true
+                            }
+                        ]
+                    },
+                    "ele": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StationObservationAggregateData"
+                        },
+                        "default": []
+                    }
+                },
+                "type": "object"
+            },
+            "StationObservationData": {
+                "required": [
+                    "dateTime",
+                    "thresholds"
+                ],
+                "properties": {
+                    "dateTime": {
+                        "description": "the date and time of the observation",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2022-01-01T10:00:00+00:00"
+                    },
+                    "temp": {
+                        "description": "the temperature at 2m above ground [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 23.4,
+                        "nullable": true
+                    },
+                    "dewpoint": {
+                        "description": "the dewpoint [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 13.3,
+                        "nullable": true
+                    },
+                    "wetBulbTemp": {
+                        "description": "wet bulb temperature [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 20.3,
+                        "nullable": true
+                    },
+                    "windSpeed": {
+                        "description": "average 10min wind speed [kn]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.5,
+                        "nullable": true
+                    },
+                    "windDirection": {
+                        "description": "average direction from which the wind originates in degree (0=N, 90=E, 180=S, 270=W) [\u00b0]",
+                        "example": 84,
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            {
+                                "type": "number",
+                                "format": "float",
+                                "nullable": true
+                            }
+                        ]
+                    },
+                    "windGust": {
+                        "description": "wind gusts speed within reference time / since last observation [kn]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 5.7,
+                        "nullable": true
+                    },
+                    "windGust10m": {
+                        "description": "wind gusts speed within 10min [kn]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 5.7,
+                        "nullable": true
+                    },
+                    "windGust1h": {
+                        "description": "wind gusts speed within 1h [kn]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 7.6,
+                        "nullable": true
+                    },
+                    "humidityRelative": {
+                        "description": "relative humidity [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 53,
+                        "nullable": true
+                    },
+                    "pressureMsl": {
+                        "description": "air pressure at MSL / temperature adjusted (QFF) [hPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 1019.6,
+                        "nullable": true
+                    },
+                    "pressure": {
+                        "description": "air pressure at station level (QFE) [hPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 1005.2,
+                        "nullable": true
+                    },
+                    "pressureChange": {
+                        "description": "air pressure change within 3h [hPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": -1.3,
+                        "nullable": true
+                    },
+                    "temp5cm": {
+                        "description": "the temperature 5cm above ground [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 27.3,
+                        "nullable": true
+                    },
+                    "temp5cmMin": {
+                        "description": "the minimum temperature 5cm above ground [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 9.3,
+                        "nullable": true
+                    },
+                    "tempMin": {
+                        "description": "the minimum temperature 2m above ground within the last 12h [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 11.3,
+                        "nullable": true
+                    },
+                    "tempMax": {
+                        "description": "the maximum temperature 2m above ground within the last 12h [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 25.6,
+                        "nullable": true
+                    },
+                    "tempMin1h": {
+                        "description": "the minimum temperature 2m above ground within the last hour [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 22.6,
+                        "nullable": true
+                    },
+                    "tempMax1h": {
+                        "description": "the maximum temperature 2m above ground within the last hour [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 25.6,
+                        "nullable": true
+                    },
+                    "prec": {
+                        "description": "precipitation amount during reference period [mm]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 10.5,
+                        "nullable": true
+                    },
+                    "precHours": {
+                        "description": "precipitation reference period in hours [h]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "prec10m": {
+                        "description": "precipitation amount during 10min [mm]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.4,
+                        "nullable": true
+                    },
+                    "prec1h": {
+                        "description": "precipitation amount during 1h [mm]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 3.2,
+                        "nullable": true
+                    },
+                    "prec6h": {
+                        "description": "precipitation amount during 6h [mm]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 5.5,
+                        "nullable": true
+                    },
+                    "prec24h": {
+                        "description": "precipitation amount during 24h [mm]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 14.5,
+                        "nullable": true
+                    },
+                    "snowHeight": {
+                        "description": "current height of snow [cm]",
+                        "example": 6.5,
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            {
+                                "type": "number",
+                                "format": "float",
+                                "nullable": true
+                            }
+                        ]
+                    },
+                    "globalRadiation10m": {
+                        "description": "global radiation within 10min [kJ/m\u00b2]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 112,
+                        "nullable": true
+                    },
+                    "globalRadiation1h": {
+                        "description": "global radiation within 1h [kJ/m\u00b2]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 423,
+                        "nullable": true
+                    },
+                    "globalRadiation24h": {
+                        "description": "global radiation within 24h [J/cm\u00b2]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 123,
+                        "nullable": true
+                    },
+                    "leafWet": {
+                        "description": "leaf wetness [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 1.26,
+                        "nullable": true
+                    },
+                    "soilTemp10": {
+                        "description": "soil temperature 10cm below surface [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 12.5,
+                        "nullable": true
+                    },
+                    "soilTemp20": {
+                        "description": "soil temperature 20cm below surface [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 14.5,
+                        "nullable": true
+                    },
+                    "soilTemp80": {
+                        "description": "soil temperature 80cm below surface [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 14.5,
+                        "nullable": true
+                    },
+                    "soilTemp120": {
+                        "description": "soil temperature 120cm below surface [\u00b0C]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 14.5,
+                        "nullable": true
+                    },
+                    "soilHumidity10": {
+                        "description": "soil humidity 10cm below surface [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 14.5,
+                        "nullable": true
+                    },
+                    "soilHumidity20": {
+                        "description": "soil humidity 20cm below surface [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 14.5,
+                        "nullable": true
+                    },
+                    "soilHumidity30": {
+                        "description": "soil humidity 30cm below surface [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 14.5,
+                        "nullable": true
+                    },
+                    "soilHumidity60": {
+                        "description": "soil humidity 60cm below surface [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 14.5,
+                        "nullable": true
+                    },
+                    "soilHumidity80": {
+                        "description": "soil humidity 80cm below surface [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 14.5,
+                        "nullable": true
+                    },
+                    "soilHumidity120": {
+                        "description": "soil humidity 120cm below surface [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": 14.5,
+                        "nullable": true
+                    },
+                    "soilWaterPot10": {
+                        "description": "soil water potential / tension - 10cm below surface [kPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": -13.54,
+                        "nullable": true
+                    },
+                    "soilWaterPot30": {
+                        "description": "soil water potential / tension - 30cm below surface [kPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": -25.24,
+                        "nullable": true
+                    },
+                    "soilWaterPot60": {
+                        "description": "soil water potential / tension - 60cm below surface [kPa]",
+                        "type": "number",
+                        "format": "float",
+                        "example": -26.12,
+                        "nullable": true
+                    },
+                    "thresholds": {
+                        "description": "thresholds",
+                        "type": "array",
+                        "items": {}
+                    }
+                },
+                "type": "object"
+            },
+            "StationObservationResponse": {
+                "title": "Response Object for raw / 10min observations",
+                "required": [
+                    "stationId",
+                    "name"
+                ],
+                "properties": {
+                    "stationId": {
+                        "title": "the station's identifier",
+                        "type": "string",
+                        "example": "106350"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "lat": {
+                        "example": 50.1,
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            {
+                                "type": "number",
+                                "format": "float",
+                                "nullable": true
+                            }
+                        ]
+                    },
+                    "lon": {
+                        "example": 8.3,
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            {
+                                "type": "number",
+                                "format": "float",
+                                "nullable": true
+                            }
+                        ]
+                    },
+                    "ele": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StationObservationData"
+                        },
+                        "default": []
+                    }
+                },
+                "type": "object"
+            },
+            "AstronomyResponseData": {
+                "required": [
+                    "dateTime",
+                    "moonIllumination",
+                    "moonPhase"
+                ],
+                "properties": {
+                    "dateTime": {
+                        "description": "date for the forecast values",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2022-01-01"
+                    },
+                    "sunrise": {
+                        "description": "date and time of the sunrise",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-04-28T12:23:45Z",
+                        "nullable": true
+                    },
+                    "sunset": {
+                        "description": "date and time of the sunset",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-03-28T10:11:22Z",
+                        "nullable": true
+                    },
+                    "transit": {
+                        "description": "date and time when the sun is at its zenith",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-03-28T10:11:22Z",
+                        "nullable": true
+                    },
+                    "civilDawn": {
+                        "description": "date and time when civil dawn begins",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-03-28T10:11:22Z",
+                        "nullable": true
+                    },
+                    "civilDusk": {
+                        "description": "date and time when civil dusk ends",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-03-28T10:11:22Z",
+                        "nullable": true
+                    },
+                    "nauticalDawn": {
+                        "description": "date and time when nautical dawn begins",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-03-28T10:11:22Z",
+                        "nullable": true
+                    },
+                    "nauticalDusk": {
+                        "description": "date and time when nautical dusk ends",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-03-28T10:11:22Z",
+                        "nullable": true
+                    },
+                    "astronomicalDawn": {
+                        "description": "date and time when astronomical dawn begins",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-03-28T10:11:22Z",
+                        "nullable": true
+                    },
+                    "astronomicalDusk": {
+                        "description": "date and time when astronomical dusk ends",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-03-28T10:11:22Z",
+                        "nullable": true
+                    },
+                    "moonIllumination": {
+                        "description": "how much of the moon is illuminated [%]",
+                        "type": "number",
+                        "format": "float",
+                        "example": "56"
+                    },
+                    "moonPhase": {
+                        "description": "moon phase (0 = new moon, 1-49 = waxing moon, 50 = full moon, 51-99 = waning moon) [%]",
+                        "type": "integer",
+                        "example": "27"
+                    },
+                    "moonRise": {
+                        "description": "date and time when the moon rises",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-03-28T10:11:22Z",
+                        "nullable": true
+                    },
+                    "moonSet": {
+                        "description": "date and time when the moon sets",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-03-28T10:11:22Z",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AstronomyResponse": {
+                "required": [
+                    "lat",
+                    "lon",
+                    "timeZone",
+                    "run",
+                    "nextFullMoon",
+                    "nextNewMoon"
+                ],
+                "properties": {
+                    "lat": {
+                        "title": "latitude used for the forecast",
+                        "type": "number",
+                        "format": "float",
+                        "example": 50.3651
+                    },
+                    "lon": {
+                        "title": "longitude used for the forecast",
+                        "type": "number",
+                        "format": "float",
+                        "example": 8.7271
+                    },
+                    "timeZone": {
+                        "description": "the timezone at this location",
+                        "type": "string",
+                        "example": "Europe/Berlin"
+                    },
+                    "run": {
+                        "description": "when astronomical values have been calculated",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2022-01-01T12:00:00+00:00"
+                    },
+                    "nextFullMoon": {
+                        "description": "date and time of the next full moon",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-03-28T10:11:22Z"
+                    },
+                    "nextNewMoon": {
+                        "description": "date and time of the next new moon",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-03-28T10:11:22Z"
+                    },
+                    "dailyData": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AstronomyResponseData"
+                        },
+                        "default": []
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "responses": {
+            "BadRequest": {
+                "description": "Bad Request  \nThis may occur when a parameter is out of bounds.\n",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "NotFound": {
+                "description": "Not Found  \nThe resource you are trying to access could not be found.\n",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "Unauthorized": {
+                "description": "Unauthorized  \nYou provided no or wrong credentials.\n",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "TooManyRequests": {
+                "description": "Too Many Requests  \nThis may happen if you exceeded the request limit or if there are any pending tasks, that may not be executed multiple times.\n",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "AccessDenied": {
+                "description": "Forbidden / Access Denied  \nYou do not have enough rights to access this ressource.\n",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    },
+                    "application/xml": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "parameters": {
+            "units": {
+                "name": "units",
+                "in": "query",
+                "description": "system of units for the response data",
+                "required": false,
+                "schema": {
+                    "type": "string"
+                },
+                "examples": {
+                    "metric": {
+                        "summary": "metric system",
+                        "value": "metric"
+                    },
+                    "imperial": {
+                        "summary": "imperial system",
+                        "value": "imperial"
+                    }
+                }
+            },
+            "latitude": {
+                "name": "lat",
+                "in": "path",
+                "description": "the latitude for this request",
+                "required": true,
+                "schema": {
+                    "type": "number"
+                },
+                "example": 50.3651
+            },
+            "longitude": {
+                "name": "lon",
+                "in": "path",
+                "description": "the latitude for this request",
+                "required": true,
+                "schema": {
+                    "type": "number"
+                },
+                "example": 8.7271
+            },
+            "minForecastHours": {
+                "name": "minHours",
+                "in": "query",
+                "description": "if set, you'll only get forecasts that have at least `minHours` of forecast hours  \nif the `model` parameter is set, `minHours` will be ignored\n",
+                "required": false,
+                "schema": {
+                    "type": "number"
+                },
+                "example": 24
+            },
+            "ForecastModel": {
+                "name": "model",
+                "in": "query",
+                "description": "forecast model to be used for a forecast",
+                "required": false,
+                "schema": {
+                    "type": "string",
+                    "nullable": true
+                },
+                "examples": {
+                    "AUTO": {
+                        "summary": "AUTO - best available model",
+                        "value": ""
+                    },
+                    "ALL": {
+                        "summary": "ALL - available models for the location",
+                        "value": "ALL"
+                    },
+                    "AUSTRALIA": {
+                        "summary": "AUSTRALIA",
+                        "value": "AUSTRALIA"
+                    },
+                    "CANADA": {
+                        "summary": "CANADA",
+                        "value": "CANADA"
+                    },
+                    "DWD-MOSMIX": {
+                        "summary": "DWD-MOSMIX",
+                        "value": "DWD-MOSMIX"
+                    },
+                    "ECMWF": {
+                        "summary": "ECMWF",
+                        "value": "ECMWF"
+                    },
+                    "ECMWF_RAPID1H": {
+                        "summary": "ECMWF_RAPID1H",
+                        "value": "ECMWF_RAPID1H"
+                    },
+                    "GFS": {
+                        "summary": "GFS",
+                        "value": "GFS"
+                    },
+                    "HARMONIE": {
+                        "summary": "HARMONIE",
+                        "value": "HARMONIE"
+                    },
+                    "HRRR": {
+                        "summary": "HRRR",
+                        "value": "HRRR"
+                    },
+                    "ICON-D2": {
+                        "summary": "ICON-D2",
+                        "value": "ICON-D2"
+                    },
+                    "ICON-RUC": {
+                        "summary": "ICON-RUC",
+                        "value": "ICON-RUC"
+                    },
+                    "ICON00625": {
+                        "summary": "ICON00625",
+                        "value": "ICON00625"
+                    },
+                    "ICONWORLD": {
+                        "summary": "ICONWORLD",
+                        "value": "ICONWORLD"
+                    },
+                    "MULTIMOD": {
+                        "summary": "MULTIMOD",
+                        "value": "MULTIMOD"
+                    },
+                    "MULTIMOD-CEUR": {
+                        "summary": "MULTIMOD-CEUR",
+                        "value": "MULTIMOD-CEUR"
+                    },
+                    "SWISS1X1": {
+                        "summary": "SWISS1X1",
+                        "value": "SWISS1X1"
+                    },
+                    "SWISS1X1-MOS": {
+                        "summary": "SWISS1X1-MOS",
+                        "value": "SWISS1X1-MOS"
+                    },
+                    "SWISS1X1-NOW": {
+                        "summary": "SWISS1X1-NOW",
+                        "value": "SWISS1X1-NOW"
+                    },
+                    "SWISS4X4": {
+                        "summary": "SWISS4X4",
+                        "value": "SWISS4X4"
+                    },
+                    "SWISS4X4NOWCAST": {
+                        "summary": "SWISS4X4NOWCAST",
+                        "value": "SWISS4X4NOWCAST"
+                    },
+                    "SWISSMRF": {
+                        "summary": "SWISSMRF",
+                        "value": "SWISSMRF"
+                    },
+                    "UKMO": {
+                        "summary": "UKMO",
+                        "value": "UKMO"
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "ApiKey": {
+                "type": "apiKey",
+                "description": "API-Keys can be configured within your subscription settings at [https://accounts.meteologix.com](https://accounts.meteologix.com)",
+                "name": "X-API-Key",
+                "in": "header"
+            },
+            "BasicAuth": {
+                "type": "http",
+                "description": "_currently for internal and enterprise use only - please use \"API Key\" authentication unless otherwise instructed_",
+                "scheme": "basic"
+            },
+            "BearerAuth": {
+                "type": "http",
+                "description": "_currently for internal and enterprise use only - please use \"API Key\" authentication unless otherwise instructed_",
+                "bearerFormat": "proprietary",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "security": [
+        {
+            "ApiKey": []
+        },
+        {
+            "BasicAuth": []
+        },
+        {
+            "BearerAuth": []
+        }
+    ],
+    "tags": [
+        {
+            "name": "Stations"
+        },
+        {
+            "name": "Current Weather"
+        },
+        {
+            "name": "Forecasts"
+        },
+        {
+            "name": "Tools"
+        }
+    ]
+}
