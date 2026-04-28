@@ -210,11 +210,44 @@ SENSOR_DESCRIPTIONS: tuple[KachelmannSensorDescription, ...] = (
         value_fn=lambda d: _trend(d, 1, "precipitation_probability_1mm"),
     ),
     KachelmannSensorDescription(
+        key="precipitation_today",
+        translation_key="precipitation_today",
+        native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
+        value_fn=lambda d: _trend(d, 0, "precipitation"),
+    ),
+    KachelmannSensorDescription(
+        key="precipitation_tomorrow",
+        translation_key="precipitation_tomorrow",
+        native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
+        value_fn=lambda d: _trend(d, 1, "precipitation"),
+    ),
+    KachelmannSensorDescription(
         key="sun_hours_relative_today",
         translation_key="sun_hours_relative_today",
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: _trend(d, 0, "sun_hours_relative"),
+    ),
+    KachelmannSensorDescription(
+        key="sun_max_possible_today",
+        translation_key="sun_max_possible_today",
+        native_unit_of_measurement=UnitOfTime.HOURS,
+        value_fn=lambda d: _trend(d, 0, "sun_max_possible"),
+    ),
+    KachelmannSensorDescription(
+        key="wind_gust_trend_today",
+        translation_key="wind_gust_trend_today",
+        native_unit_of_measurement=UnitOfSpeed.METERS_PER_SECOND,
+        device_class=SensorDeviceClass.WIND_SPEED,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda d: _trend(d, 0, "wind_gust"),
+    ),
+    KachelmannSensorDescription(
+        key="wind_gust_trend_tomorrow",
+        translation_key="wind_gust_trend_tomorrow",
+        native_unit_of_measurement=UnitOfSpeed.METERS_PER_SECOND,
+        device_class=SensorDeviceClass.WIND_SPEED,
+        value_fn=lambda d: _trend(d, 1, "wind_gust"),
     ),
     # ===== Astronomy sensors =====
     KachelmannSensorDescription(
@@ -334,10 +367,15 @@ async def async_setup_entry(
     coordinator = entry_data["coordinator"]
     device_info = entry_data["device_info"]
 
-    async_add_entities(
+    entities: list[SensorEntity] = [
         KachelmannSensor(coordinator, device_info, entry, desc)
         for desc in SENSOR_DESCRIPTIONS
+    ]
+    # Add the 14-day trend overview sensor with all data as attributes
+    entities.append(
+        KachelmannTrendSensor(coordinator, device_info, entry)
     )
+    async_add_entities(entities)
 
 
 class KachelmannSensor(CoordinatorEntity, SensorEntity):
@@ -358,3 +396,37 @@ class KachelmannSensor(CoordinatorEntity, SensorEntity):
     def native_value(self) -> Any:
         """Return the sensor value."""
         return self.entity_description.value_fn(self.coordinator.data or {})
+
+
+class KachelmannTrendSensor(CoordinatorEntity, SensorEntity):
+    """Sensor exposing the full 14-day trend as attributes.
+
+    State: number of forecast days available.
+    Attributes: complete trend14 data array, accessible via templates like:
+      {{ state_attr('sensor.kachelmannwetter_trend_14day', 'days')[2].temp_max }}
+    """
+
+    _attr_has_entity_name = True
+    _attr_attribution = "Data provided by KachelmannWetter / Meteologix AG"
+    _attr_translation_key = "trend_14day"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator, device_info, entry: ConfigEntry) -> None:
+        """Set up the instance."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}_trend_14day"
+        self._attr_device_info = device_info
+
+    @property
+    def native_value(self) -> int | None:
+        """Return the number of trend days available."""
+        trend = (self.coordinator.data or {}).get("trend14", [])
+        return len(trend) if trend else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the full 14-day trend data as attributes."""
+        trend = (self.coordinator.data or {}).get("trend14", [])
+        if not trend:
+            return None
+        return {"days": trend}

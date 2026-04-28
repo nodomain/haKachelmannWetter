@@ -112,6 +112,33 @@
       },
       "api_requests_remaining": {
         "default": "mdi:api"
+      },
+      "precipitation_probability_today": {
+        "default": "mdi:weather-rainy"
+      },
+      "precipitation_probability_tomorrow": {
+        "default": "mdi:weather-rainy"
+      },
+      "precipitation_today": {
+        "default": "mdi:weather-rainy"
+      },
+      "precipitation_tomorrow": {
+        "default": "mdi:weather-rainy"
+      },
+      "sun_hours_relative_today": {
+        "default": "mdi:weather-sunny"
+      },
+      "sun_max_possible_today": {
+        "default": "mdi:sun-clock"
+      },
+      "wind_gust_trend_today": {
+        "default": "mdi:weather-windy"
+      },
+      "wind_gust_trend_tomorrow": {
+        "default": "mdi:weather-windy"
+      },
+      "trend_14day": {
+        "default": "mdi:calendar-week"
       }
     },
     "binary_sensor": {
