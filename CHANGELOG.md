@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.3.2] - 2026-04-28 - Fix moon icon in daily forecast
+
+### Fixed
+- Daily forecast no longer shows moon (clear-night) icon — night slots were leaking into day aggregation due to non-deterministic set ordering in worst-condition selection
+
 ## [2.3.1] - 2026-04-28 - Security fix: redact sensitive data from logs
 
 ### Security
