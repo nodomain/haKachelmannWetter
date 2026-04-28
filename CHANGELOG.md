@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.3.1] - 2026-04-28 - Security fix: redact sensitive data from logs
+
+### Security
+- Remove clear-text logging of user coordinates in coordinator (CodeQL CWE-312/CWE-532)
+- Remove clear-text logging of API request URLs containing location data in client (CodeQL CWE-312/CWE-532)
+
+## [2.3.0] - 2026-04-28 - Kachelmann weather icons as entity picture
+
+### Added
+- Weather entity shows Kachelmann SVG weather symbol as `entity_picture`
+- Icon updates dynamically based on current `weatherSymbol` from API
+- Store raw `weather_symbol` in normalized current data
+
+## [2.2.0] - 2026-04-28 - Gold tier with tests and pre-commit
+
+### Added
+- 21 unit tests covering config flow, setup/unload, weather entity, sensors, binary sensors, and all helper functions
+- Pre-commit hooks (ruff lint + format, pytest)
+- pytest-homeassistant-custom-component test infrastructure
+- Restore `strings.json` (needed by test framework)
+
+### Changed
+- CI: ruff blocking, mypy informational, Node.js 24
+
 ## [2.1.0] - 2026-04-28 - Full trend exposure
 
 ### Added

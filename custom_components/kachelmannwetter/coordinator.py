@@ -1,4 +1,5 @@
 """DataUpdateCoordinator for KachelmannWetter."""
+
 from __future__ import annotations
 
 import asyncio
@@ -60,7 +61,7 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self) -> dict:
         """Fetch all endpoints in parallel and normalize."""
         lat, lon = self.latitude, self.longitude
-        _LOGGER.debug("Updating data for %s,%s", lat, lon)
+        _LOGGER.debug("Updating data for configured location")
         try:
             # Fetch all endpoints in parallel
             (
@@ -101,9 +102,7 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
 
         except RateLimitError as err:
             retry = err.retry_after
-            _LOGGER.warning(
-                "Rate limited by Kachelmann API, retry after %s s", retry
-            )
+            _LOGGER.warning("Rate limited by Kachelmann API, retry after %s s", retry)
             if retry:
                 async_call_later(
                     self.hass,
@@ -119,9 +118,7 @@ class KachelmannDataUpdateCoordinator(DataUpdateCoordinator):
             raise UpdateFailed(f"Error fetching data: {err}") from err
 
 
-def _enrich_daily_with_trend(
-    daily: list[dict], trend14: list[dict]
-) -> None:
+def _enrich_daily_with_trend(daily: list[dict], trend14: list[dict]) -> None:
     """Merge precipitation_probability from trend14 into daily forecasts."""
     trend_by_date: dict[str, dict] = {}
     for t in trend14:
@@ -134,12 +131,8 @@ def _enrich_daily_with_trend(
         date_only = dt_str[:10] if dt_str else ""
         trend = trend_by_date.get(date_only, {})
         if trend:
-            day["precipitation_probability"] = trend.get(
-                "precipitation_probability_1mm"
-            )
-            day["_precipitation_probability_10mm"] = trend.get(
-                "precipitation_probability_10mm"
-            )
+            day["precipitation_probability"] = trend.get("precipitation_probability_1mm")
+            day["_precipitation_probability_10mm"] = trend.get("precipitation_probability_10mm")
             day["_precipitation_type"] = trend.get("precipitation_type")
             day["_precipitation_word"] = trend.get("precipitation_word")
             day["_thunderstorm"] = trend.get("thunderstorm")
