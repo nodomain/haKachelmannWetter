@@ -1,25 +1,25 @@
 """Config flow for KachelmannWetter integration."""
 from __future__ import annotations
 
-from typing import Any
 from logging import Logger, getLogger
+from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.core import callback
 
+from .client import KachelmannClient
 from .const import (
-    DOMAIN,
     CONF_API_KEY,
     CONF_LATITUDE,
     CONF_LONGITUDE,
-    OPTION_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
-    MIN_UPDATE_INTERVAL,
+    DOMAIN,
     MAX_UPDATE_INTERVAL,
+    MIN_UPDATE_INTERVAL,
+    OPTION_UPDATE_INTERVAL,
 )
-from .client import KachelmannClient
 from .exceptions import InvalidAuth
 
 _LOGGER: Logger = getLogger(__package__)

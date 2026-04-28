@@ -1,8 +1,8 @@
 """Async client for KachelmannWetter API."""
 from __future__ import annotations
 
-from typing import Any
 import logging
+from typing import Any
 
 import aiohttp
 from homeassistant.core import HomeAssistant

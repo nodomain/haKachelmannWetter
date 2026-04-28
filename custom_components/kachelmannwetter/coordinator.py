@@ -8,22 +8,22 @@ from logging import Logger, getLogger
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
-from homeassistant.helpers.event import async_call_later
 
 from .client import KachelmannClient
-from .exceptions import RateLimitError, InvalidAuth
+from .const import DEFAULT_UPDATE_INTERVAL
+from .exceptions import InvalidAuth, RateLimitError
 from .helpers import (
+    normalize_astronomy,
     normalize_current,
     normalize_daily_from_6h,
     normalize_hourly,
     normalize_trend14,
-    normalize_astronomy,
 )
-from .const import DEFAULT_UPDATE_INTERVAL
 
 _LOGGER: Logger = getLogger(__package__)
 

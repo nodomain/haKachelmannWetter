@@ -9,14 +9,14 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
 from .const import (
-    DOMAIN,
-    PLATFORMS,
-    MANUFACTURER,
     CONF_API_KEY,
     CONF_LATITUDE,
     CONF_LONGITUDE,
-    OPTION_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
+    DOMAIN,
+    MANUFACTURER,
+    OPTION_UPDATE_INTERVAL,
+    PLATFORMS,
 )
 from .coordinator import KachelmannDataUpdateCoordinator
 

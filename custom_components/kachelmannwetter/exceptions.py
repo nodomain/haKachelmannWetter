@@ -1,6 +1,7 @@
 """Exceptions for KachelmannWetter integration."""
 from __future__ import annotations
 
+
 class KachelmannError(Exception):
     """Base exception for KachelmannWetter errors."""
 

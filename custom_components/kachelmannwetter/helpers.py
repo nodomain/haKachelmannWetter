@@ -1,8 +1,8 @@
 """Helpers to normalize Kachelmann API responses for Home Assistant."""
 from __future__ import annotations
 
+from datetime import date, datetime
 from typing import Any
-from datetime import datetime, date
 
 # Maps Kachelmann weatherSymbol strings to HA condition strings.
 WEATHER_SYMBOL_MAP: dict[str, str] = {
@@ -227,7 +227,9 @@ def normalize_daily_from_6h(data: dict[str, Any]) -> list[dict[str, Any]]:
             "native_templow": _safe_min(d["native_templow"]),
             "native_wind_gust_speed": _safe_max(d["native_wind_gust_speed"]),
             "native_wind_speed": _safe_max(d["native_wind_speed"]),
-            "wind_bearing": round(avg) if (avg := _safe_avg(d["wind_bearing"])) is not None else None,
+            "wind_bearing": (
+                round(avg) if (avg := _safe_avg(d["wind_bearing"])) is not None else None
+            ),
             "_global_radiation": _safe_sum(d["global_radiation"]),
             "_sun_hours": _safe_sum(d["sun_hours"]),
         })
